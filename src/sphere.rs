@@ -4,7 +4,6 @@ use ray::Ray;
 use vector;
 use material::*;
 use std::rc::Rc;
-use std::fmt;
 
 #[derive(Debug)]
 pub struct Sphere {

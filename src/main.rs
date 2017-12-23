@@ -9,17 +9,20 @@ mod camera;
 mod sampling;
 mod material;
 mod lambertian;
+mod metal;
+mod mixture;
 
 use vector::Vec3;
 use ray::Ray;
 use rand::Rng;
 use camera::Camera;
 use lambertian::Lambertian;
+use metal::Metal;
+use mixture::Mixture;
 
 use sphere::*;
 use hitable::*;
 use hitable_list::*;
-use sampling::*;
 
 fn color(ray: &Ray, world: &Hitable, depth: i32) -> Vec3
 {
@@ -42,16 +45,35 @@ fn color(ray: &Ray, world: &Hitable, depth: i32) -> Vec3
 }
 
 fn write_image() {
-    let nx = 200;
-    let ny = 100;
-    let ns = 100;
+    let nx = 400;
+    let ny = 200;
+    let ns = 400;
     
     println!("P3\n{} {}\n255", nx, ny);
 
-    let s1 = Box::new(Sphere::new(Vec3::new(0.0, 0.0, -1.0), 0.5, Lambertian::new(&Vec3::new(0.5, 0.5, 0.5))));
-    let s2 = Box::new(Sphere::new(Vec3::new(0.0, -100.5, -1.0), 100.0, Lambertian::new(&Vec3::new(0.8, 0.5, 0.1))));
-    
-    let world = HitableList::new(vec![s1, s2]);
+    let mut obj_list = Vec::<Box<Hitable>>::new();
+    obj_list.push(Box::new(Sphere::new(Vec3::new(0.0, -100.5, -1.0), 100.0, Lambertian::new(&Vec3::new(0.8, 0.8, 0.0)))));
+    for x in 1..4 {
+        for y in 1..4 {
+            for z in 1..4 {
+                let xf = (x as f64) / 4.0;
+                let yf = (y as f64) / 4.0;
+                let zf = (z as f64) / 4.0;
+                let material = Mixture::new(Metal::new(&Vec3::new(1.0, 1.0, 1.0)),
+                                            Lambertian::new(&Vec3::new(xf, yf, zf)),
+                                            0.8);
+                obj_list.push(Box::new(Sphere::new(Vec3::new(xf-(1.0/2.0),
+                                                             yf-0.5,
+                                                             -1.5+zf), 0.1,
+                                                   material)));
+            }
+        }
+    }
+    let world = HitableList::new(obj_list);// vec![
+        // Box::new(Sphere::new(Vec3::new(0.0, 0.0, -1.0), 0.5, Lambertian::new(&Vec3::new(0.3, 0.3, 0.3)))),
+        // Box::new(Sphere::new(Vec3::new(1.0, 0.0, -1.0), 0.5, Metal::new(&Vec3::new(0.8, 0.6, 0.2)))),
+        // Box::new(Sphere::new(Vec3::new(-1.0, 0.0, -1.0), 0.5, Metal::new(&Vec3::new(0.8, 0.8, 0.8))))
+        //     ]);
     let camera = Camera::new();
     let mut rng = rand::thread_rng();
 
