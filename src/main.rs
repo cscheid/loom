@@ -81,7 +81,7 @@ fn write_image() {
         // Box::new(Sphere::new(Vec3::new(1.0, 0.0, -1.0), 0.5, Metal::new(&Vec3::new(0.8, 0.6, 0.2)))),
         // Box::new(Sphere::new(Vec3::new(-1.0, 0.0, -1.0), 0.5, Metal::new(&Vec3::new(0.8, 0.8, 0.8))))
         //     ]);
-    let camera = Camera::new();
+    let camera = Camera::new(60.0, (nx as f64)/(ny as f64));
     let mut rng = rand::thread_rng();
 
     for j in (0..ny).rev() {
