@@ -1,14 +1,26 @@
 mod vector;
 mod ray;
+mod hitable;
+mod sphere;
+
 use vector::Vec3;
 use ray::Ray;
+use hitable::HitRecord;
+use sphere::Sphere;
+use hitable::Hitable;
 
 fn color(ray: &Ray) -> Vec3
 {
-    let unit_direction = vector::unit_vector(&ray.direction());
-    let t = 0.5 * (unit_direction.y() + 1.0);
-    vector::lerp(&Vec3::new(1.0, 1.0, 1.0),
-                 &Vec3::new(0.5, 0.7, 1.0), t)
+    let mut r = HitRecord::new();
+    let s = Sphere::new(Vec3::new(0.0, 0.0, -1.0), 0.5);
+    if s.hit(ray, 0.0, 1e20, &mut r) {
+        return 0.5 * (r.normal + Vec3::new(1.0, 1.0, 1.0));
+    } else {
+        let unit_direction = vector::unit_vector(&ray.direction());
+        let t = 0.5 * (unit_direction.y() + 1.0);
+        vector::lerp(&Vec3::new(1.0, 1.0, 1.0),
+                     &Vec3::new(0.5, 0.7, 1.0), t)
+    }
 }
 
 fn write_image() {
