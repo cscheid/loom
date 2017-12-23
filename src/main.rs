@@ -1,4 +1,5 @@
 mod vector;
+mod ray;
 use vector::Vec3;
 
 fn write_ppm() {
