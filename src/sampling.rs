@@ -1,4 +1,5 @@
 use vector::Vec3;
+
 use rand;
 use rand::Rng;
 

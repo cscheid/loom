@@ -11,6 +11,7 @@ mod material;
 mod lambertian;
 mod metal;
 mod mixture;
+mod dielectric;
 
 use vector::Vec3;
 use ray::Ray;
@@ -19,6 +20,7 @@ use camera::Camera;
 use lambertian::Lambertian;
 use metal::Metal;
 use mixture::Mixture;
+use dielectric::Dielectric;
 
 use sphere::*;
 use hitable::*;
@@ -59,9 +61,14 @@ fn write_image() {
                 let xf = (x as f64) / 4.0;
                 let yf = (y as f64) / 4.0;
                 let zf = (z as f64) / 4.0;
-                let material = Mixture::new(Metal::new(&Vec3::new(1.0, 1.0, 1.0)),
-                                            Lambertian::new(&Vec3::new(xf, yf, zf)),
-                                            0.8);
+                
+                let material = if (x + y + z) % 2 == 0 {
+                    Mixture::new(Metal::new(&Vec3::new(1.0, 1.0, 1.0)),
+                                 Lambertian::new(&Vec3::new(xf, yf, zf)),
+                                 0.8)
+                } else {
+                    Dielectric::new(1.5)
+                };
                 obj_list.push(Box::new(Sphere::new(Vec3::new(xf-(1.0/2.0),
                                                              yf-0.5,
                                                              -1.5+zf), 0.1,
