@@ -12,19 +12,19 @@ impl Vec3 {
     }
 
     #[inline]
-    fn x(&self) -> f64 { self.e[0] }
+    pub fn x(&self) -> f64 { self.e[0] }
     #[inline]
-    fn y(&self) -> f64 { self.e[1] }
+    pub fn y(&self) -> f64 { self.e[1] }
     #[inline]
-    fn z(&self) -> f64 { self.e[2] }
+    pub fn z(&self) -> f64 { self.e[2] }
     #[inline]
 
     #[inline]
-    fn r(&self) -> f64 { self.e[0] }
+    pub fn r(&self) -> f64 { self.e[0] }
     #[inline]
-    fn g(&self) -> f64 { self.e[1] }
+    pub fn g(&self) -> f64 { self.e[1] }
     #[inline]
-    fn b(&self) -> f64 { self.e[2] }
+    pub fn b(&self) -> f64 { self.e[2] }
 
     #[inline]
     pub fn dot(&self, _rhs: &Vec3) -> f64 {
@@ -139,17 +139,25 @@ impl ops::Neg for Vec3 {
     }
 }
 
-// pub fn cross(v1: &Vec3, v2: &Vec3) -> Vec3
-// {
-//     Vec3::new(v2.e[1]
-// }
+pub fn unit_vector(v: &Vec3) -> Vec3 {
+    *v / v.length()
+}
 
+pub fn cross(v1: &Vec3, v2: &Vec3) -> Vec3 {
+    Vec3::new(v1.e[1] * v2.e[2] - v1.e[2] * v2.e[1],
+            -(v1.e[0] * v2.e[2] - v1.e[2] * v2.e[0]),
+              v1.e[0] * v2.e[1] - v1.e[1] * v2.e[0])
+}
+
+pub fn lerp(v1: &Vec3, v2: &Vec3, u: f64) -> Vec3 {
+    return (1.0-u) * *v1 + u * *v2;
+}
 
 //////////////////////////////////////////////////////////////////////////////
 
 #[test]
 fn it_doesnt_smoke() {
-    let mut v1 = Vec3::new(1.0, 0.0, 0.0);
+    let v1 = Vec3::new(1.0, 0.0, 0.0);
     let mut v2 = Vec3::new(0.0, 1.0, 0.0);
     
     println!("v1 is {:?}", v1);
