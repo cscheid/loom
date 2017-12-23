@@ -12,6 +12,11 @@ impl Vec3 {
     }
 
     #[inline]
+    pub fn zero() -> Vec3 {
+        Vec3 { e: [0.0, 0.0, 0.0] }
+    }
+
+    #[inline]
     pub fn x(&self) -> f64 { self.e[0] }
     #[inline]
     pub fn y(&self) -> f64 { self.e[1] }
@@ -39,6 +44,13 @@ impl Vec3 {
     #[inline]
     pub fn length_squared(&self) -> f64 {
         self.dot(&self)
+    }
+
+    #[inline]
+    pub fn set(&mut self, _rhs: &Vec3) {
+        self.e[0] = _rhs[0];
+        self.e[1] = _rhs[1];
+        self.e[2] = _rhs[2];
     }
     
 }
@@ -157,6 +169,10 @@ pub fn dot(v1: &Vec3, v2: &Vec3) -> f64 {
     v1.dot(v2)
 }
 
+pub fn reflect(v: &Vec3, n: &Vec3) -> Vec3 {
+    *v - ((2.0 * dot(v, n)) * *n)
+}
+
 //////////////////////////////////////////////////////////////////////////////
 
 #[test]
@@ -187,4 +203,5 @@ fn it_doesnt_smoke() {
     println!("-v2 is {:?}", -v2);
     println!("v2.length() is {:?}", v2.length());
     println!("v2.length_squared() is {:?}", v2.length_squared());
+    println!("v1 cross v2 is {:?}", cross(v1, v2));
 }

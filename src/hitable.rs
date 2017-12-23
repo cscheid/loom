@@ -1,10 +1,13 @@
 use vector::Vec3;
 use ray::Ray;
+use material::Material;
+use std::rc::Rc;
 
 pub struct HitRecord {
     pub t: f64,
     pub p: Vec3,
-    pub normal: Vec3
+    pub normal: Vec3,
+    pub material: Option<Rc<Material>>
 }
 
 impl HitRecord {
@@ -12,7 +15,8 @@ impl HitRecord {
         HitRecord {
             t: 0.0,
             p: Vec3::new(0.0, 0.0, 0.0),
-            normal: Vec3::new(0.0, 0.0, 0.0)
+            normal: Vec3::new(0.0, 0.0, 0.0),
+            material: None
         }
     }
 }

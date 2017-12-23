@@ -1,5 +1,6 @@
 use hitable::*;
 use ray::Ray;
+use std::rc::Rc;
 
 pub struct HitableList {
     pub v: Vec<Box<Hitable>>
@@ -24,6 +25,7 @@ impl Hitable for HitableList {
                 rec.t = temp_record.t;
                 rec.p = temp_record.p;
                 rec.normal = temp_record.normal;
+                rec.material = Some(Rc::clone(&temp_record.material.as_ref().expect("")));
             }
         }
         return hit_anything;

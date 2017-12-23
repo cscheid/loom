@@ -1,5 +1,4 @@
 use vector::Vec3;
-use std::ops;
 
 #[derive(Debug, Copy, Clone)]
 pub struct Ray {
@@ -14,6 +13,11 @@ impl Ray {
     }
 
     #[inline]
+    pub fn zero() -> Ray {
+        Ray { a: Vec3::zero(), b: Vec3::zero() }
+    }
+
+    #[inline]
     pub fn origin(&self) -> Vec3 { self.a }
 
     #[inline]
@@ -23,7 +27,12 @@ impl Ray {
     pub fn point_at_parameter(&self, t: f64) -> Vec3 {
         self.a + t * self.b
     }
-    
+
+    #[inline]
+    pub fn set(&mut self, a: &Vec3, b: &Vec3) {
+        self.a.set(a);
+        self.b.set(b);
+    }
 }
 
 #[test]
