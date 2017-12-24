@@ -32,8 +32,14 @@ use sphere::*;
 
 use getopts::Options;
 
-use std::rc::Rc;
+use std::cmp;
 use std::env;
+use std::fs::File;
+use std::io::BufWriter;
+use std::io::Write;
+use std::io;
+use std::rc::Rc;
+use std::time::SystemTime;
 
 //////////////////////////////////////////////////////////////////////////////
 
@@ -108,16 +114,47 @@ fn color(ray: &Ray, world: &Hitable,
     }
 }
 
+fn write_image_to_file(image: &Vec<Vec<Vec3>>, samples_so_far: usize, subsample: usize, file_prefix: &String)
+{
+    let mut f = BufWriter::new(File::create(format!("{}.ppm", file_prefix)).unwrap());
+    let ny = image.len()/subsample;
+    let nx = image[0].len()/subsample;
+    let ns = samples_so_far as f64;
+    f.write_fmt(format_args!("P3\n{} {}\n255\n", nx, ny)).unwrap();
+    for super_j in (0..ny).rev() {
+        for super_i in 0..nx {
+            let mut super_pixel = Vec3::zero();
+            let top   = cmp::min(image.len(),    (super_j+1)*subsample);
+            let right = cmp::min(image[0].len(), (super_i+1)*subsample);
+            let h = top   - super_j*subsample;
+            let w = right - super_i*subsample;
+            for j in (super_j*subsample..top).rev() {
+                for i in super_i*subsample..right {
+                    super_pixel = super_pixel + image[j][i];
+                }
+            }
+            let mut out_col = super_pixel / (ns * (w as f64) * (h as f64));
+            out_col = Vec3::new(out_col[0].sqrt(), out_col[1].sqrt(), out_col[2].sqrt());
+            let ir = (255.99 * out_col[0]) as i32;
+            let ig = (255.99 * out_col[1]) as i32;
+            let ib = (255.99 * out_col[2]) as i32;
+            f.write_fmt(format_args!("{} {} {}\n", ir, ig, ib)).unwrap();
+        }
+    }
+}
+
 fn write_image(args: &Args)
 {
-    let nx         = args.w.unwrap_or(200);
-    let ny         = args.h.unwrap_or(100);
-    let ns         = args.s.unwrap_or(100);
-    let fov        = args.f.unwrap_or(90.0);
-    let aperture   = args.a.unwrap_or(0.0);
-    let focus_dist = args.d.unwrap_or(1.0);
+    let nx           = args.w.unwrap_or(200);
+    let ny           = args.h.unwrap_or(100);
+    let ns           = args.s.unwrap_or(100);
+    let fov          = args.f.unwrap_or(90.0);
+    let aperture     = args.a.unwrap_or(0.0);
+    let focus_dist   = args.d.unwrap_or(1.0);
     
-    println!("P3\n{} {}\n255", nx, ny);
+    let default_name = "out".to_string();
+    let output_name  = &args.o.as_ref().unwrap_or(&default_name);
+    
     let world = scene();
     let background = sky(); // overhead_light();
     
@@ -130,34 +167,38 @@ fn write_image(args: &Args)
     );
     let mut rng = rand::thread_rng();
 
-    for j in (0..ny).rev() {
-        for i in 0..nx {
-            let mut col = Vec3::new(0.0, 0.0, 0.0);
-            for _ in 0..ns {
+    let mut output_image = Vec::<Vec<Vec3>>::new();
+    for j in 0..ny {
+        output_image.push(vec![Vec3::zero(); nx]);
+    }
+
+    let mut last_write = SystemTime::now();
+    for s in 1..ns+1 {
+        for j in (0..ny).rev() {
+            for i in 0..nx {
                 let u = ((i as f64) + rng.gen::<f64>()) / (nx as f64);
                 let v = ((j as f64) + rng.gen::<f64>()) / (ny as f64);
                 let r = camera.get_ray(u, v);
-                col = col + color(&r, &world, &background, 0);
+                output_image[j][i] = output_image[j][i] + color(&r, &world, &background, 0);
             }
-            col = col / (ns as f64);
-            col = Vec3::new(col[0].sqrt(), col[1].sqrt(), col[2].sqrt());
-            let ir = (255.99 * col[0]) as i32;
-            let ig = (255.99 * col[1]) as i32;
-            let ib = (255.99 * col[2]) as i32;
-            println!("{} {} {}", ir, ig, ib);
         }
     }
+    write_image_to_file(&output_image, ns, 1, &format!("{}-1", output_name));
+    write_image_to_file(&output_image, ns, 2, &format!("{}-2", output_name));
+    write_image_to_file(&output_image, ns, 4, &format!("{}-4", output_name));
+    write_image_to_file(&output_image, ns, 8, &format!("{}-8", output_name));
 }
 
 //////////////////////////////////////////////////////////////////////////////
 
 struct Args {
-    pub w: Option<i32>,
-    pub h: Option<i32>,
-    pub s: Option<i32>,
+    pub w: Option<usize>,
+    pub h: Option<usize>,
+    pub s: Option<usize>,
     pub f: Option<f64>,
     pub a: Option<f64>,
-    pub d: Option<f64>
+    pub d: Option<f64>,
+    pub o: Option<String>
 }
 
 fn main() {
@@ -179,11 +220,12 @@ fn main() {
     };
 
     write_image(&(Args {
-        w: matches.opt_str("w").and_then(|x| x.parse::<i32>().ok()),
-        h: matches.opt_str("h").and_then(|x| x.parse::<i32>().ok()),
-        s: matches.opt_str("s").and_then(|x| x.parse::<i32>().ok()),
+        w: matches.opt_str("w").and_then(|x| x.parse::<usize>().ok()),
+        h: matches.opt_str("h").and_then(|x| x.parse::<usize>().ok()),
+        s: matches.opt_str("s").and_then(|x| x.parse::<usize>().ok()),
         f: matches.opt_str("f").and_then(|x| x.parse::<f64>().ok()),
         a: matches.opt_str("a").and_then(|x| x.parse::<f64>().ok()),
-        d: matches.opt_str("d").and_then(|x| x.parse::<f64>().ok())
+        d: matches.opt_str("d").and_then(|x| x.parse::<f64>().ok()),
+        o: matches.opt_str("o")
     }));
 }
