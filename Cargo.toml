@@ -7,3 +7,6 @@ authors = ["cscheid"]
 rand = "0.3"
 getopts = "0.2"
 
+[profile.release]
+debug = true
+

@@ -47,31 +47,35 @@ use std::time::SystemTime;
 fn scene() -> HitableList
 {
     let mut obj_list = Vec::<Box<Hitable>>::new();
+    let complexity = 2;
+    let count = 2 * complexity + 1;
+    let f = (count * 2) as f64;
     obj_list.push(Box::new(
-        Sphere::new(Vec3::new(0.0, -100.36, -1.0), 100.0,
+        Sphere::new(Vec3::new(0.0, -100.0 - 0.25, -1.0), 100.0,
                     Lambertian::new(&Vec3::new(0.9, 0.9, 0.9)))));
-    for x in 1..8 {
-        for y in 1..8 {
-            for z in 1..8 {
-                let xf = (x as f64) / 8.0;
-                let yf = (y as f64) / 8.0;
-                let zf = (z as f64) / 8.0;
-                let material = if (x + y + z) % 2 == 1 {
-                    Mixture::new(Metal::new(&Vec3::new(1.0, 1.0, 1.0)),
-                                 Lambertian::new(&Vec3::new(xf, yf, zf)),
-                                 0.8)
-                } else {
+    for x in -complexity..complexity+1 {
+        for y in -complexity..complexity+1 {
+            for z in -complexity..complexity+1 {
+                let xf = (x as f64) / f;
+                let yf = (y as f64) / f;
+                let zf = (z as f64) / f;
+                let glass = (x + y + z + 3 * complexity) % 2 == 1;
+                let material = if glass {
                     Dielectric::new(1.5)
+                } else {
+                    Mixture::new(Metal::new(&Vec3::new(1.0, 1.0, 1.0)),
+                                 Lambertian::new(&Vec3::new(xf+0.5, yf+0.5, zf+0.5)),
+                                 0.8)
                 };
-                obj_list.push(Box::new(Sphere::new(Vec3::new(xf-(1.0/2.0),
-                                                             yf-0.5,
-                                                             -1.5+zf), 0.05,
+                obj_list.push(Box::new(Sphere::new(Vec3::new(xf,
+                                                             yf,
+                                                             -1.0+zf), 0.95/(2.0*f),
                                                    Rc::clone(&material))));
                 // make glass spheres hollow
-                if (x + y + z) % 2 == 0 {
-                    obj_list.push(Box::new(Sphere::new(Vec3::new(xf-(1.0/2.0),
-                                                                 yf-0.5,
-                                                                 -1.5+zf), -0.045,
+                if glass {
+                    obj_list.push(Box::new(Sphere::new(Vec3::new(xf,
+                                                                 yf,
+                                                                 -1.0+zf), -0.9/(2.0*f),
                                                        Rc::clone(&material))));
                 }
             }
@@ -184,7 +188,7 @@ fn write_image(args: &Args)
     let background = overhead_light();
     
     let camera = Camera::new(
-        &Vec3::new(-0.2, 0.5, 0.0),
+        &Vec3::new(-0.2, 0.5, -2.0),
         &Vec3::new(0.0, 0.0, -1.0),
         &Vec3::new(0.0, 1.0, 0.0),
         fov, (nx as f64)/(ny as f64),
