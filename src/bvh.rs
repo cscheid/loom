@@ -55,13 +55,16 @@ impl Hitable for BVH {
 
 impl BVH {
     pub fn build(objs: &mut Vec<Box<Hitable>>) -> Box<Hitable> {
-        if objs.len() < 2 {
+        if objs.len() == 0 {
             panic!("Need nonempty objs!");
         } else if objs.len() == 1 {
-            objs.remove(0)
+            let result = objs.remove(0);
+            // eprintln!("leaf, bounding box: {:?}", result.bounding_box());
+            result
         } else {
             let mut rng = rand::thread_rng();
             let axis = rng.gen_range(0, 3);
+            // eprintln!("{} nodes, Splitting on axis {}", objs.len(), axis);
             // it'd be faster to _pivot by_, rather than sort by,
             // namely O(n log n) rather than O(n log n). but I don't
             // want to implement pivoting right now, and this will
@@ -79,6 +82,7 @@ impl BVH {
             let bbox = aabb::surrounding_box(
                 &left_hitable.as_ref().bounding_box().unwrap(),
                 &right_hitable.as_ref().bounding_box().unwrap());
+            // eprintln!("Bounding box: {:?}", bbox);
             Box::new(BVH {
                 left: left_hitable,
                 right: right_hitable,

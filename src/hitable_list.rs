@@ -13,6 +13,10 @@ impl HitableList {
     pub fn new(v: Vec<Box<Hitable>>) -> HitableList {
         HitableList { v: v }
     }
+
+    pub fn get_list_mut(&mut self) -> &mut Vec<Box<Hitable>> {
+        &mut self.v
+    }
 }
 
 impl Hitable for HitableList {

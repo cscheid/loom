@@ -18,6 +18,7 @@ mod sphere;
 mod vector;
 
 use background::*;
+use bvh::BVH;
 use camera::Camera;
 use dielectric::Dielectric;
 use lambertian::Lambertian;
@@ -49,13 +50,12 @@ fn scene() -> HitableList
     obj_list.push(Box::new(
         Sphere::new(Vec3::new(0.0, -100.36, -1.0), 100.0,
                     Lambertian::new(&Vec3::new(0.9, 0.9, 0.9)))));
-    for x in 1..4 {
-        for y in 1..4 {
-            for z in 1..4 {
-                let xf = (x as f64) / 4.0;
-                let yf = (y as f64) / 4.0;
-                let zf = (z as f64) / 4.0;
-                
+    for x in 1..8 {
+        for y in 1..8 {
+            for z in 1..8 {
+                let xf = (x as f64) / 8.0;
+                let yf = (y as f64) / 8.0;
+                let zf = (z as f64) / 8.0;
                 let material = if (x + y + z) % 2 == 1 {
                     Mixture::new(Metal::new(&Vec3::new(1.0, 1.0, 1.0)),
                                  Lambertian::new(&Vec3::new(xf, yf, zf)),
@@ -63,16 +63,15 @@ fn scene() -> HitableList
                 } else {
                     Dielectric::new(1.5)
                 };
-
                 obj_list.push(Box::new(Sphere::new(Vec3::new(xf-(1.0/2.0),
                                                              yf-0.5,
-                                                             -1.5+zf), 0.1,
+                                                             -1.5+zf), 0.05,
                                                    Rc::clone(&material))));
                 // make glass spheres hollow
                 if (x + y + z) % 2 == 0 {
                     obj_list.push(Box::new(Sphere::new(Vec3::new(xf-(1.0/2.0),
                                                                  yf-0.5,
-                                                                 -1.5+zf), -0.09,
+                                                                 -1.5+zf), -0.045,
                                                        Rc::clone(&material))));
                 }
             }
@@ -80,6 +79,21 @@ fn scene() -> HitableList
     }
     HitableList::new(obj_list)
 }
+
+// fn scene() -> HitableList
+// {
+//     let mut obj_list = Vec::<Box<Hitable>>::new();
+//     for i in 0..4 {
+//         for j in 0..4 {
+//             for k in 0..4 {
+//                 obj_list.push(Box::new(
+//                     Sphere::new(Vec3::new(i as f64, j as f64, k as f64), 0.5,
+//                                 Lambertian::new(&Vec3::new(0.9, 0.9, 0.9)))));
+//             }
+//         }
+//     }
+//     HitableList::new(obj_list)
+// }
 
 //////////////////////////////////////////////////////////////////////////////
 
@@ -164,8 +178,10 @@ fn write_image(args: &Args)
     let default_name = "out".to_string();
     let output_name  = &args.o.as_ref().unwrap_or(&default_name);
     
-    let world = scene();
-    let background = sky(); // overhead_light();
+    let mut world = scene();
+    let bvh_world = BVH::build(world.get_list_mut());
+
+    let background = overhead_light();
     
     let camera = Camera::new(
         &Vec3::new(-0.2, 0.5, 0.0),
@@ -190,7 +206,8 @@ fn write_image(args: &Args)
                 let u = ((i as f64) + rng.gen::<f64>()) / (nx as f64);
                 let v = ((j as f64) + rng.gen::<f64>()) / (ny as f64);
                 let r = camera.get_ray(u, v);
-                output_image[j][i] = output_image[j][i] + color(&r, &world, &background, 0);
+                output_image[j][i] = output_image[j][i] + color(&r, &*bvh_world, &background, 0);
+                // output_image[j][i] = output_image[j][i] + color(&r, &world, &background, 0);
             }
         }
         match last_write.elapsed() {

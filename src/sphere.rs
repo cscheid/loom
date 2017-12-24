@@ -48,7 +48,8 @@ impl Hitable for Sphere {
     }
 
     fn bounding_box(&self) -> Option<AABB> {
-        Some(AABB::new(self.center - Vec3::new(self.radius, self.radius, self.radius),
-                       self.center + Vec3::new(self.radius, self.radius, self.radius)))
+        let r = self.radius.abs(); // works when radius is negative
+        Some(AABB::new(self.center - Vec3::new(r, r, r),
+                       self.center + Vec3::new(r, r, r)))
     }
 }
