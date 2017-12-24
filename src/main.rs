@@ -143,6 +143,14 @@ fn write_image_to_file(image: &Vec<Vec<Vec3>>, samples_so_far: usize, subsample:
     }
 }
 
+fn write_multiple_images_to_file(image: &Vec<Vec<Vec3>>, ns: usize, name: &String)
+{
+    write_image_to_file(&image, ns, 1, &format!("{}-1", name));
+    write_image_to_file(&image, ns, 2, &format!("{}-2", name));
+    write_image_to_file(&image, ns, 4, &format!("{}-4", name));
+    write_image_to_file(&image, ns, 8, &format!("{}-8", name));
+}
+
 fn write_image(args: &Args)
 {
     let nx           = args.w.unwrap_or(200);
@@ -151,6 +159,7 @@ fn write_image(args: &Args)
     let fov          = args.f.unwrap_or(90.0);
     let aperture     = args.a.unwrap_or(0.0);
     let focus_dist   = args.d.unwrap_or(1.0);
+    let interval     = args.i.unwrap_or(600);
     
     let default_name = "out".to_string();
     let output_name  = &args.o.as_ref().unwrap_or(&default_name);
@@ -173,6 +182,8 @@ fn write_image(args: &Args)
     }
 
     let mut last_write = SystemTime::now();
+    let mut current_iteration = 1;
+    
     for s in 1..ns+1 {
         for j in (0..ny).rev() {
             for i in 0..nx {
@@ -182,11 +193,22 @@ fn write_image(args: &Args)
                 output_image[j][i] = output_image[j][i] + color(&r, &world, &background, 0);
             }
         }
+        match last_write.elapsed() {
+            Ok(elapsed) => {
+                // write images every minute.
+                if elapsed.as_secs() >= interval {
+                    last_write = SystemTime::now();
+                    let name = format!("{}-{:04}", output_name, s);
+                    write_multiple_images_to_file(&output_image, s, &name);
+                }
+            },
+            Err(e) => {
+                panic!("time travel on now.elapsed()");
+            }
+        }
     }
-    write_image_to_file(&output_image, ns, 1, &format!("{}-1", output_name));
-    write_image_to_file(&output_image, ns, 2, &format!("{}-2", output_name));
-    write_image_to_file(&output_image, ns, 4, &format!("{}-4", output_name));
-    write_image_to_file(&output_image, ns, 8, &format!("{}-8", output_name));
+    let name = format!("{}-final", output_name);
+    write_multiple_images_to_file(&output_image, ns, &name);
 }
 
 //////////////////////////////////////////////////////////////////////////////
@@ -198,7 +220,8 @@ struct Args {
     pub f: Option<f64>,
     pub a: Option<f64>,
     pub d: Option<f64>,
-    pub o: Option<String>
+    pub o: Option<String>,
+    pub i: Option<u64>
 }
 
 fn main() {
@@ -206,6 +229,7 @@ fn main() {
 
     let mut opts = Options::new();
     opts.optopt("o", "output", "set output file name", "NAME");
+    opts.optopt("i", "input", "set interval between saving intermediate files", "NAME");
     opts.optopt("w", "width", "set image width in pixels", "NAME");
     opts.optopt("h", "height", "set image height in pixels", "NAME");
     opts.optopt("s", "samples", "set number of samples per pixel", "NAME");
@@ -226,6 +250,7 @@ fn main() {
         f: matches.opt_str("f").and_then(|x| x.parse::<f64>().ok()),
         a: matches.opt_str("a").and_then(|x| x.parse::<f64>().ok()),
         d: matches.opt_str("d").and_then(|x| x.parse::<f64>().ok()),
+        i: matches.opt_str("i").and_then(|x| x.parse::<u64>().ok()),
         o: matches.opt_str("o")
     }));
 }
