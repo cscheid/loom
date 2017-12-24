@@ -2,6 +2,7 @@ extern crate rand;
 extern crate getopts;
 
 mod aabb;
+mod background;
 mod bvh;
 mod camera;
 mod dielectric;
@@ -16,6 +17,7 @@ mod sampling;
 mod sphere;
 mod vector;
 
+use background::*;
 use camera::Camera;
 use dielectric::Dielectric;
 use lambertian::Lambertian;
@@ -33,48 +35,14 @@ use getopts::Options;
 use std::rc::Rc;
 use std::env;
 
-// Rust doesn't let me use max() because of NaNs, etc. Huh.
-#[inline]
-fn fmax(v1: f64, v2: f64) -> f64
+//////////////////////////////////////////////////////////////////////////////
+
+fn scene() -> HitableList
 {
-    if v1 > v2 { v1 } else { v2 }
-}
-
-fn color(ray: &Ray, world: &Hitable, depth: i32) -> Vec3
-{
-    let mut r = HitRecord::new();
-
-    if world.hit(ray, 0.001, 1e20, &mut r) {
-        let mut scattered = Ray::zero();
-        let mut attenuation = Vec3::zero();
-        if depth < 50 && r.material.as_ref().expect("right here, yes").scatter(ray, &r, &mut attenuation, &mut scattered) {
-            attenuation * color(&scattered, world, depth+1)
-        } else {
-            Vec3::new(0.0, 0.0, 0.0)
-        }
-    } else {
-        let unit_direction = vector::unit_vector(&ray.direction());
-        
-        Vec3::new(1.0, 1.0, 1.0) * fmax(0.0, unit_direction.dot(&Vec3::new(0.0, 1.0, 0.0)))
-        // let t = 0.5 * (unit_direction.y() + 1.0);
-        // vector::lerp(&Vec3::new(1.0, 1.0, 1.0),
-        //              &Vec3::new(0.5, 0.7, 1.0), t)
-    }
-}
-
-fn write_image(args: &Args)
-{
-    let nx         = args.w.unwrap_or(200);
-    let ny         = args.h.unwrap_or(100);
-    let ns         = args.s.unwrap_or(100);
-    let fov        = args.f.unwrap_or(90.0);
-    let aperture   = args.a.unwrap_or(0.0);
-    let focus_dist = args.d.unwrap_or(1.0);
-    
-    println!("P3\n{} {}\n255", nx, ny);
-
     let mut obj_list = Vec::<Box<Hitable>>::new();
-    obj_list.push(Box::new(Sphere::new(Vec3::new(0.0, -100.36, -1.0), 100.0, Lambertian::new(&Vec3::new(0.9, 0.9, 0.9)))));
+    obj_list.push(Box::new(
+        Sphere::new(Vec3::new(0.0, -100.36, -1.0), 100.0,
+                    Lambertian::new(&Vec3::new(0.9, 0.9, 0.9)))));
     for x in 1..4 {
         for y in 1..4 {
             for z in 1..4 {
@@ -104,7 +72,55 @@ fn write_image(args: &Args)
             }
         }
     }
-    let world = HitableList::new(obj_list);
+    HitableList::new(obj_list)
+}
+
+//////////////////////////////////////////////////////////////////////////////
+
+// Rust doesn't let me use max() because of NaNs, etc. Huh.
+#[inline]
+fn fmax(v1: f64, v2: f64) -> f64
+{
+    if v1 > v2 { v1 } else { v2 }
+}
+
+fn color(ray: &Ray, world: &Hitable,
+         background: &Background,
+         depth: i32) -> Vec3 where
+{
+    let mut r = HitRecord::new();
+
+    if world.hit(ray, 0.001, 1e20, &mut r) {
+        let mut scattered = Ray::zero();
+        let mut attenuation = Vec3::zero();
+        if depth < 50 &&
+            r.material
+            .as_ref()
+            .expect("right here, yes")
+            .scatter(ray, &r, &mut attenuation, &mut scattered) {
+            attenuation * color(&scattered, world, background, depth+1)
+        } else {
+            Vec3::new(0.0, 0.0, 0.0)
+        }
+    } else {
+        let unit_direction = vector::unit_vector(&ray.direction());
+        background.get_background(&unit_direction)
+    }
+}
+
+fn write_image(args: &Args)
+{
+    let nx         = args.w.unwrap_or(200);
+    let ny         = args.h.unwrap_or(100);
+    let ns         = args.s.unwrap_or(100);
+    let fov        = args.f.unwrap_or(90.0);
+    let aperture   = args.a.unwrap_or(0.0);
+    let focus_dist = args.d.unwrap_or(1.0);
+    
+    println!("P3\n{} {}\n255", nx, ny);
+    let world = scene();
+    let background = sky(); // overhead_light();
+    
     let camera = Camera::new(
         &Vec3::new(-0.2, 0.5, 0.0),
         &Vec3::new(0.0, 0.0, -1.0),
@@ -121,7 +137,7 @@ fn write_image(args: &Args)
                 let u = ((i as f64) + rng.gen::<f64>()) / (nx as f64);
                 let v = ((j as f64) + rng.gen::<f64>()) / (ny as f64);
                 let r = camera.get_ray(u, v);
-                col = col + color(&r, &world, 0);
+                col = col + color(&r, &world, &background, 0);
             }
             col = col / (ns as f64);
             col = Vec3::new(col[0].sqrt(), col[1].sqrt(), col[2].sqrt());
@@ -134,6 +150,7 @@ fn write_image(args: &Args)
 }
 
 //////////////////////////////////////////////////////////////////////////////
+
 struct Args {
     pub w: Option<i32>,
     pub h: Option<i32>,
