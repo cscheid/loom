@@ -1,6 +1,9 @@
+use aabb;
+use aabb::AABB;
 use hitable::*;
 use ray::Ray;
 use std::rc::Rc;
+use std::option::Option;
 
 pub struct HitableList {
     pub v: Vec<Box<Hitable>>
@@ -29,5 +32,17 @@ impl Hitable for HitableList {
             }
         }
         return hit_anything;
+    }
+
+    fn bounding_box(&self) -> Option<AABB> {
+        let mut result = AABB::zero();
+        for h in self.v.iter() {
+            let bb_maybe = h.bounding_box();
+            match bb_maybe {
+                Some(bb) => result = aabb::surrounding_box(&result, &bb),
+                None => return None
+            };
+        }
+        Some(result)
     }
 }

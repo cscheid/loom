@@ -1,6 +1,8 @@
 extern crate rand;
 extern crate getopts;
 
+mod aabb;
+mod bvh;
 mod camera;
 mod dielectric;
 mod hitable;
@@ -143,7 +145,6 @@ struct Args {
 
 fn main() {
     let args: Vec<String> = env::args().collect();
-    let program = args[0].clone();
 
     let mut opts = Options::new();
     opts.optopt("o", "output", "set output file name", "NAME");

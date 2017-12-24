@@ -25,10 +25,10 @@ impl Material for Dielectric {
     fn scatter(&self, r_in: &Ray, rec: &HitRecord,
                attenuation: &mut Vec3, scattered: &mut Ray) -> bool {
         let dot = r_in.direction().dot(&rec.normal);
-        let mut outward_normal = Vec3::zero();
         let reflected = vector::reflect(&r_in.direction(), &rec.normal);
-        let mut ni_over_nt = 0.0;
-        let mut cosine = 0.0;
+        let outward_normal;
+        let ni_over_nt;
+        let cosine;
         
         attenuation.set(&Vec3::new(1.0, 1.0, 1.0));
         if dot > 0.0 {
