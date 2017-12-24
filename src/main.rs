@@ -1,30 +1,42 @@
 extern crate rand;
+extern crate getopts;
 
-mod vector;
-mod ray;
-mod hitable;
-mod sphere;
-mod hitable_list;
 mod camera;
-mod sampling;
-mod material;
+mod dielectric;
+mod hitable;
+mod hitable_list;
 mod lambertian;
+mod material;
 mod metal;
 mod mixture;
-mod dielectric;
+mod ray;
+mod sampling;
+mod sphere;
+mod vector;
 
-use vector::Vec3;
-use ray::Ray;
-use rand::Rng;
 use camera::Camera;
+use dielectric::Dielectric;
 use lambertian::Lambertian;
 use metal::Metal;
 use mixture::Mixture;
-use dielectric::Dielectric;
-
-use sphere::*;
+use rand::Rng;
+use ray::Ray;
+use vector::Vec3;
 use hitable::*;
 use hitable_list::*;
+use sphere::*;
+
+use getopts::Options;
+
+use std::rc::Rc;
+use std::env;
+
+// Rust doesn't let me use max() because of NaNs, etc. Huh.
+#[inline]
+fn fmax(v1: f64, v2: f64) -> f64
+{
+    if v1 > v2 { v1 } else { v2 }
+}
 
 fn color(ray: &Ray, world: &Hitable, depth: i32) -> Vec3
 {
@@ -40,21 +52,27 @@ fn color(ray: &Ray, world: &Hitable, depth: i32) -> Vec3
         }
     } else {
         let unit_direction = vector::unit_vector(&ray.direction());
-        let t = 0.5 * (unit_direction.y() + 1.0);
-        vector::lerp(&Vec3::new(1.0, 1.0, 1.0),
-                     &Vec3::new(0.5, 0.7, 1.0), t)
+        
+        Vec3::new(1.0, 1.0, 1.0) * fmax(0.0, unit_direction.dot(&Vec3::new(0.0, 1.0, 0.0)))
+        // let t = 0.5 * (unit_direction.y() + 1.0);
+        // vector::lerp(&Vec3::new(1.0, 1.0, 1.0),
+        //              &Vec3::new(0.5, 0.7, 1.0), t)
     }
 }
 
-fn write_image() {
-    let nx = 400;
-    let ny = 200;
-    let ns = 400;
+fn write_image(args: &Args)
+{
+    let nx         = args.w.unwrap_or(200);
+    let ny         = args.h.unwrap_or(100);
+    let ns         = args.s.unwrap_or(100);
+    let fov        = args.f.unwrap_or(90.0);
+    let aperture   = args.a.unwrap_or(0.0);
+    let focus_dist = args.d.unwrap_or(1.0);
     
     println!("P3\n{} {}\n255", nx, ny);
 
     let mut obj_list = Vec::<Box<Hitable>>::new();
-    obj_list.push(Box::new(Sphere::new(Vec3::new(0.0, -100.5, -1.0), 100.0, Lambertian::new(&Vec3::new(0.8, 0.8, 0.0)))));
+    obj_list.push(Box::new(Sphere::new(Vec3::new(0.0, -100.36, -1.0), 100.0, Lambertian::new(&Vec3::new(0.9, 0.9, 0.9)))));
     for x in 1..4 {
         for y in 1..4 {
             for z in 1..4 {
@@ -62,26 +80,36 @@ fn write_image() {
                 let yf = (y as f64) / 4.0;
                 let zf = (z as f64) / 4.0;
                 
-                let material = if (x + y + z) % 2 == 0 {
+                let material = if (x + y + z) % 2 == 1 {
                     Mixture::new(Metal::new(&Vec3::new(1.0, 1.0, 1.0)),
                                  Lambertian::new(&Vec3::new(xf, yf, zf)),
                                  0.8)
                 } else {
                     Dielectric::new(1.5)
                 };
+
                 obj_list.push(Box::new(Sphere::new(Vec3::new(xf-(1.0/2.0),
                                                              yf-0.5,
                                                              -1.5+zf), 0.1,
-                                                   material)));
+                                                   Rc::clone(&material))));
+                // make glass spheres hollow
+                if (x + y + z) % 2 == 0 {
+                    obj_list.push(Box::new(Sphere::new(Vec3::new(xf-(1.0/2.0),
+                                                                 yf-0.5,
+                                                                 -1.5+zf), -0.09,
+                                                       Rc::clone(&material))));
+                }
             }
         }
     }
-    let world = HitableList::new(obj_list);// vec![
-        // Box::new(Sphere::new(Vec3::new(0.0, 0.0, -1.0), 0.5, Lambertian::new(&Vec3::new(0.3, 0.3, 0.3)))),
-        // Box::new(Sphere::new(Vec3::new(1.0, 0.0, -1.0), 0.5, Metal::new(&Vec3::new(0.8, 0.6, 0.2)))),
-        // Box::new(Sphere::new(Vec3::new(-1.0, 0.0, -1.0), 0.5, Metal::new(&Vec3::new(0.8, 0.8, 0.8))))
-        //     ]);
-    let camera = Camera::new(60.0, (nx as f64)/(ny as f64));
+    let world = HitableList::new(obj_list);
+    let camera = Camera::new(
+        &Vec3::new(-0.2, 0.5, 0.0),
+        &Vec3::new(0.0, 0.0, -1.0),
+        &Vec3::new(0.0, 1.0, 0.0),
+        fov, (nx as f64)/(ny as f64),
+        aperture, focus_dist
+    );
     let mut rng = rand::thread_rng();
 
     for j in (0..ny).rev() {
@@ -103,6 +131,41 @@ fn write_image() {
     }
 }
 
+//////////////////////////////////////////////////////////////////////////////
+struct Args {
+    pub w: Option<i32>,
+    pub h: Option<i32>,
+    pub s: Option<i32>,
+    pub f: Option<f64>,
+    pub a: Option<f64>,
+    pub d: Option<f64>
+}
+
 fn main() {
-    write_image();
+    let args: Vec<String> = env::args().collect();
+    let program = args[0].clone();
+
+    let mut opts = Options::new();
+    opts.optopt("o", "output", "set output file name", "NAME");
+    opts.optopt("w", "width", "set image width in pixels", "NAME");
+    opts.optopt("h", "height", "set image height in pixels", "NAME");
+    opts.optopt("s", "samples", "set number of samples per pixel", "NAME");
+    opts.optopt("f", "fov", "set field of view in degrees", "NAME");
+    opts.optopt("a", "aperture", "set aperture diameter", "NAME");
+    opts.optopt("d", "distance", "set focus distance", "NAME");
+    opts.optflag("?", "help", "print this help menu");
+
+    let matches = match opts.parse(&args[1..]) {
+        Ok(m) => { m }
+        Err(f) => { panic!(f.to_string()) }
+    };
+
+    write_image(&(Args {
+        w: matches.opt_str("w").and_then(|x| x.parse::<i32>().ok()),
+        h: matches.opt_str("h").and_then(|x| x.parse::<i32>().ok()),
+        s: matches.opt_str("s").and_then(|x| x.parse::<i32>().ok()),
+        f: matches.opt_str("f").and_then(|x| x.parse::<f64>().ok()),
+        a: matches.opt_str("a").and_then(|x| x.parse::<f64>().ok()),
+        d: matches.opt_str("d").and_then(|x| x.parse::<f64>().ok())
+    }));
 }

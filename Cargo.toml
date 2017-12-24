@@ -5,3 +5,5 @@ authors = ["cscheid"]
 
 [dependencies]
 rand = "0.3"
+getopts = "0.2"
+

@@ -1,6 +1,5 @@
 use material::Material;
 use vector::Vec3;
-use vector;
 use ray::Ray;
 use hitable::*;
 

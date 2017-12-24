@@ -1,31 +1,50 @@
 use vector::Vec3;
 use ray::Ray;
 use std::f64::consts::PI;
+use vector::*;
+use sampling;
 
 pub struct Camera {
     pub origin: Vec3,
     pub lower_left_corner: Vec3,
     pub horizontal: Vec3,
-    pub vertical: Vec3
+    pub vertical: Vec3,
+    pub lens_radius: f64,
+    pub u: Vec3,
+    pub v: Vec3,
+    pub w: Vec3
 }
 
 impl Camera {
-    pub fn new(vfov: f64, aspect: f64) -> Camera {
+    pub fn new(look_from: &Vec3, look_at: &Vec3, vup: &Vec3,
+               vfov: f64, aspect: f64,
+               aperture: f64, focus_dist: f64) -> Camera {
+        
         let theta = vfov * PI / 180.0;
         let half_height = (theta / 2.0).tan();
         let half_width = aspect * half_height;
-        
+
+        let w = unit_vector(&(*look_from - *look_at));
+        let u = unit_vector(&cross(vup, &w));
+        let v = cross(&w, &u);
+
         Camera {
-            lower_left_corner: Vec3::new(-half_width, -half_height, -1.0),
-            horizontal: Vec3::new(2.0 * half_width, 0.0, 0.0),
-            vertical: Vec3::new(0.0, 2.0 * half_height, 0.0),
-            origin: Vec3::new(0.0, 0.0, 0.0)
+            lower_left_corner: *look_from - half_width*focus_dist*u - half_height*focus_dist*v - focus_dist*w,
+            horizontal: 2.0 * half_width * focus_dist * u,
+            vertical: 2.0 * half_height * focus_dist * v,
+            origin: *look_from,
+            lens_radius: aperture / 2.0,
+            u: u,
+            v: v,
+            w: w
         }
     }
-    pub fn get_ray(&self, u: f64, v: f64) -> Ray {
-        Ray::new(self.origin,
+    pub fn get_ray(&self, s: f64, t: f64) -> Ray {
+        let rd = self.lens_radius * sampling::random_in_unit_disk();
+        let offset = self.u * rd.x() + self.v * rd.y();
+        Ray::new(self.origin + offset,
                  self.lower_left_corner +
-                 u * self.horizontal +
-                 v * self.vertical)
+                 s * self.horizontal +
+                 t * self.vertical - self.origin - offset)
     }
 }
