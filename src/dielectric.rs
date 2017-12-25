@@ -3,12 +3,11 @@ use vector::Vec3;
 use vector;
 use ray::Ray;
 use hitable::*;
+use random::*;
 
 use std::rc::Rc;
 use std::fmt;
 use std::fmt::Debug;
-use rand;
-use rand::Rng;
 
 #[derive(Debug)]
 pub struct Dielectric {
@@ -43,8 +42,7 @@ impl Material for Dielectric {
         match vector::refract(&r_in.direction(), &outward_normal, ni_over_nt) {
             Some(refracted) => {
                 let reflected_prob = schlick(cosine, self.refraction_index); 
-                let mut rng = rand::thread_rng();
-                if rng.gen::<f64>() < reflected_prob {
+                if rand_double() < reflected_prob {
                     scattered.set(&rec.p, &reflected);
                 } else {
                     scattered.set(&rec.p, &refracted);

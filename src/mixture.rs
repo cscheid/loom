@@ -2,9 +2,8 @@ use material::Material;
 use vector::Vec3;
 use ray::Ray;
 use hitable::*;
+use random::*;
 
-use rand;
-use rand::Rng;
 use std::rc::Rc;
 use std::fmt;
 use std::fmt::Debug;
@@ -19,8 +18,7 @@ pub struct Mixture {
 impl Material for Mixture {
     fn scatter(&self, ray_in: &Ray, rec: &HitRecord,
                attenuation: &mut Vec3, scattered: &mut Ray) -> bool {
-        let mut rng = rand::thread_rng();
-        if rng.gen::<f64>() > self.u {
+        if rand_double() > self.u {
             self.mat_1.scatter(ray_in, rec, attenuation, scattered)
         } else {
             self.mat_2.scatter(ray_in, rec, attenuation, scattered)

@@ -12,6 +12,7 @@ mod lambertian;
 mod material;
 mod metal;
 mod mixture;
+mod random;
 mod ray;
 mod sampling;
 mod sphere;
@@ -21,6 +22,7 @@ use background::*;
 use bvh::BVH;
 use camera::Camera;
 use dielectric::Dielectric;
+use hitable_list::*;
 use lambertian::Lambertian;
 use metal::Metal;
 use mixture::Mixture;
@@ -28,7 +30,6 @@ use rand::Rng;
 use ray::Ray;
 use vector::Vec3;
 use hitable::*;
-use hitable_list::*;
 use sphere::*;
 
 use getopts::Options;
@@ -38,16 +39,15 @@ use std::env;
 use std::fs::File;
 use std::io::BufWriter;
 use std::io::Write;
-use std::io;
 use std::rc::Rc;
 use std::time::SystemTime;
 
 //////////////////////////////////////////////////////////////////////////////
 
-fn scene() -> HitableList
+fn scene() -> Vec<Box<Hitable>>
 {
     let mut obj_list = Vec::<Box<Hitable>>::new();
-    let complexity = 2;
+    let complexity = 5;
     let count = 2 * complexity + 1;
     let f = (count * 2) as f64;
     obj_list.push(Box::new(
@@ -72,32 +72,17 @@ fn scene() -> HitableList
                                                              -1.0+zf), 0.95/(2.0*f),
                                                    Rc::clone(&material))));
                 // make glass spheres hollow
-                if glass {
-                    obj_list.push(Box::new(Sphere::new(Vec3::new(xf,
-                                                                 yf,
-                                                                 -1.0+zf), -0.9/(2.0*f),
-                                                       Rc::clone(&material))));
-                }
+                // if glass {
+                //     obj_list.push(Box::new(Sphere::new(Vec3::new(xf,
+                //                                                  yf,
+                //                                                  -1.0+zf), -0.9/(2.0*f),
+                //                                        Rc::clone(&material))));
+                // }
             }
         }
     }
-    HitableList::new(obj_list)
+    obj_list
 }
-
-// fn scene() -> HitableList
-// {
-//     let mut obj_list = Vec::<Box<Hitable>>::new();
-//     for i in 0..4 {
-//         for j in 0..4 {
-//             for k in 0..4 {
-//                 obj_list.push(Box::new(
-//                     Sphere::new(Vec3::new(i as f64, j as f64, k as f64), 0.5,
-//                                 Lambertian::new(&Vec3::new(0.9, 0.9, 0.9)))));
-//             }
-//         }
-//     }
-//     HitableList::new(obj_list)
-// }
 
 //////////////////////////////////////////////////////////////////////////////
 
@@ -182,8 +167,9 @@ fn write_image(args: &Args)
     let default_name = "out".to_string();
     let output_name  = &args.o.as_ref().unwrap_or(&default_name);
     
-    let mut world = scene();
-    let bvh_world = BVH::build(world.get_list_mut());
+    let world = scene();
+    // let bvh_world = Box::new(HitableList::new(world));
+    let bvh_world = BVH::build(world);
 
     let background = overhead_light();
     
@@ -197,12 +183,12 @@ fn write_image(args: &Args)
     let mut rng = rand::thread_rng();
 
     let mut output_image = Vec::<Vec<Vec3>>::new();
-    for j in 0..ny {
+    for _j in 0..ny {
         output_image.push(vec![Vec3::zero(); nx]);
     }
 
+    let mut wrote_anything = false;
     let mut last_write = SystemTime::now();
-    let mut current_iteration = 1;
     
     for s in 1..ns+1 {
         for j in (0..ny).rev() {
@@ -217,13 +203,14 @@ fn write_image(args: &Args)
         match last_write.elapsed() {
             Ok(elapsed) => {
                 // write images every minute.
-                if elapsed.as_secs() >= interval {
+                if elapsed.as_secs() >= interval || !wrote_anything {
+                    wrote_anything = true;
                     last_write = SystemTime::now();
                     let name = format!("{}-{:04}", output_name, s);
                     write_multiple_images_to_file(&output_image, s, &name);
                 }
             },
-            Err(e) => {
+            Err(_e) => {
                 panic!("time travel on now.elapsed()");
             }
         }
@@ -246,6 +233,8 @@ struct Args {
 }
 
 fn main() {
+    random::init_rng();
+    
     let args: Vec<String> = env::args().collect();
 
     let mut opts = Options::new();

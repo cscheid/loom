@@ -1,6 +1,7 @@
-use hitable::*;
 use aabb::AABB;
 use aabb;
+use hitable::*;
+use hitable_list::*;
 use ray::Ray;
 
 use rand;
@@ -53,14 +54,18 @@ impl Hitable for BVH {
     }
 }
 
+// profiled on a relatively small scene - should probably do this more carefully.
+const MIN_LENGTH: usize = 32;
+
 impl BVH {
-    pub fn build(objs: &mut Vec<Box<Hitable>>) -> Box<Hitable> {
+    pub fn build(mut objs: Vec<Box<Hitable>>) -> Box<Hitable> {
         if objs.len() == 0 {
             panic!("Need nonempty objs!");
-        } else if objs.len() == 1 {
-            let result = objs.remove(0);
-            // eprintln!("leaf, bounding box: {:?}", result.bounding_box());
-            result
+        } else if objs.len() <= MIN_LENGTH {
+            Box::new(HitableList::new(objs))
+            // let result = objs.remove(0);
+            // // eprintln!("leaf, bounding box: {:?}", result.bounding_box());
+            // result
         } else {
             let mut rng = rand::thread_rng();
             let axis = rng.gen_range(0, 3);
@@ -75,10 +80,10 @@ impl BVH {
                 ffcmp(b1.min()[axis], b2.min()[axis])
             });
             let median_ix = objs.len() / 2;
-            let mut right_objs = objs.drain(median_ix..).collect();
-            let mut left_objs = objs.drain(..).collect();
-            let left_hitable = BVH::build(&mut left_objs);
-            let right_hitable = BVH::build(&mut right_objs);
+            let right_objs = objs.drain(median_ix..).collect();
+            let left_objs = objs.drain(..).collect();
+            let left_hitable = BVH::build(left_objs);
+            let right_hitable = BVH::build(right_objs);
             let bbox = aabb::surrounding_box(
                 &left_hitable.as_ref().bounding_box().unwrap(),
                 &right_hitable.as_ref().bounding_box().unwrap());

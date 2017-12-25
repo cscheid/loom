@@ -6,17 +6,30 @@ use std::rc::Rc;
 use std::option::Option;
 
 pub struct HitableList {
-    pub v: Vec<Box<Hitable>>
+    pub v: Vec<Box<Hitable>>,
+    pub bbox: Option<AABB>
 }
 
 impl HitableList {
     pub fn new(v: Vec<Box<Hitable>>) -> HitableList {
-        HitableList { v: v }
+        let bbox = bounding_box_internal(&v);
+        HitableList {
+            v: v,
+            bbox: bbox
+        }
     }
+}
 
-    pub fn get_list_mut(&mut self) -> &mut Vec<Box<Hitable>> {
-        &mut self.v
+fn bounding_box_internal(v: &Vec<Box<Hitable>>) -> Option<AABB> {
+    let mut result = AABB::zero();
+    for h in v.iter() {
+        let bb_maybe = h.bounding_box();
+        match bb_maybe {
+            Some(bb) => result = aabb::surrounding_box(&result, &bb),
+            None => return None
+        };
     }
+    Some(result)
 }
 
 impl Hitable for HitableList {
@@ -39,14 +52,6 @@ impl Hitable for HitableList {
     }
 
     fn bounding_box(&self) -> Option<AABB> {
-        let mut result = AABB::zero();
-        for h in self.v.iter() {
-            let bb_maybe = h.bounding_box();
-            match bb_maybe {
-                Some(bb) => result = aabb::surrounding_box(&result, &bb),
-                None => return None
-            };
-        }
-        Some(result)
+        self.bbox
     }
 }
