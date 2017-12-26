@@ -9,6 +9,7 @@ use lambertian::*;
 use material::*;
 use metal::*;
 use mixture::*;
+use rectangle::*;
 use scene::*;
 use sphere::*;
 
@@ -144,6 +145,29 @@ pub fn deserialize_sphere(v: &Value) -> Option<Box<Hitable>>
     }
 }
 
+pub fn deserialize_rectangle(v: &Value) -> Option<Box<Hitable>>
+{
+    match v {
+        &Value::Object(ref m) => {
+            let bottom_left = deserialize_vec3(&m["bottom_left"]);
+            let right       = deserialize_vec3(&m["right"]);
+            let up          = deserialize_vec3(&m["up"]);
+            let material    = deserialize_material(&m["material"]);
+            if bottom_left.is_none() || right.is_none() ||
+                up.is_none() || material.is_none() {
+                    None
+                } else {
+                    Some(Box::new(Rectangle::new(
+                        bottom_left.unwrap(),
+                        right.unwrap(),
+                        up.unwrap(),
+                        material.unwrap())))
+                }
+        },
+        _ => None
+    }
+}
+
 pub fn deserialize_hitable_list(v: &Value) -> Option<Box<Hitable>>
 {
     match v {
@@ -217,7 +241,9 @@ pub fn deserialize_hitable(v: &Value) -> Option<Box<Hitable>>
                 None
             } else {
                 let name = class.unwrap();
-                if name == "sphere" {
+                if name == "rectangle" {
+                    deserialize_rectangle(object)
+                } else if name == "sphere" {
                     deserialize_sphere(object)
                 } else if name == "hitable_list" {
                     deserialize_hitable_list(object)

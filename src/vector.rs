@@ -1,4 +1,8 @@
 use std::ops;
+use tests::*;
+use rand;
+use rand::Rng;
+use rand::ThreadRng;
 
 #[derive(Debug, Copy, Clone)]
 pub struct Vec3 {
@@ -187,32 +191,30 @@ pub fn refract(v: &Vec3, n: &Vec3, ni_over_nt: f64) -> Option<Vec3> {
 //////////////////////////////////////////////////////////////////////////////
 
 #[test]
-fn it_doesnt_smoke() {
+fn it_works() {
     let v1 = Vec3::new(1.0, 0.0, 0.0);
     let mut v2 = Vec3::new(0.0, 1.0, 0.0);
-    
-    println!("v1 is {:?}", v1);
-    println!("v1 + v2 is {:?}", v1 + v2); // this is a little goofy, but ok
-    println!("v1 - v2 is {:?}", v1 - v2);
-    println!("v1 * v1 is {:?}", v1 * v1);
+    let mut rng = rand::thread_rng();
 
-    println!("v1.dot(v2) is {:?}", v1.dot(&v2));
+    assert!(within_eps(&(v1 + v2), &Vec3::new(1.0, 1.0, 0.0)));
+    assert!(within_eps(&(v1 + v2), &Vec3::new(1.0, 1.0, 0.0)));
 
-    println!("v1 * v2 is {:?}", v1 * v2);
-    println!("v2 * 2 is {:?}", v2 * 2.0);
-    println!("2 * v2 is {:?}", 2.0 * v2);
+    for _ in 0..100 {
+        let r1 = random_vec();
+        let r2 = random_vec();
+        let rf = rng.gen::<f64>();
+        
+        assert!(within_eps(&(r1 + r2), &(r2 + r1)));
+        assert!(within_eps(&(r1 * r2), &(r2 * r1)));
+        assert!(within_eps_f(r1.dot(&r2), r2.dot(&r1)));
+        assert!(within_eps_f(r1.dot(&(r2 * rf)), (r1 * rf).dot(&r2)));
+        assert!(within_eps_f(r1.dot(&(r2 / rf)), (r1 / rf).dot(&r2)));
+        assert!(within_eps_f(r1.length() * rf, (r1 * rf).length()));
+        assert!(within_eps_f(r1.length() / rf, (r1 / rf).length()));
+        assert!(within_eps_f(r1.length() * r1.length(), r1.length_squared()));
+        assert!(within_eps(&(r1 * -1.0), &(-r1)));
+    }
 
-    println!("v1 / v2 is {:?}", v1 / v2);
-    println!("v2 / 2 is {:?}", v2 / 2.0);
-    println!("2 / v2 is {:?}", 2.0 / v2);
-
-    println!("v2[0] is {:?}", &v2[0]);
-
-    (&mut v2)[0] = 5.0;
-
-    println!("v2[0] is {:?}", &v2[0]);
-    println!("-v2 is {:?}", -v2);
-    println!("v2.length() is {:?}", v2.length());
-    println!("v2.length_squared() is {:?}", v2.length_squared());
-    println!("v1 cross v2 is {:?}", cross(v1, v2));
+    // FIXME: test cross product
+    // println!("v1 cross v2 is {:?}", cross(&v1, &v2));
 }

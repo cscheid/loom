@@ -15,10 +15,16 @@ pub struct Lambertian {
     pub albedo: Vec3
 }
 
+// two-sided lambertian
 impl Material for Lambertian {
     fn scatter(&self, _ray: &Ray, rec: &HitRecord,
                attenuation: &mut Vec3, scattered: &mut Ray) -> bool {
-        let target = rec.p + rec.normal + sampling::random_in_unit_sphere();
+        let target;
+        if rec.normal.dot(&_ray.direction()) > 0.0 {
+            target = rec.p - rec.normal + sampling::random_in_unit_sphere();
+        } else {
+            target = rec.p + rec.normal + sampling::random_in_unit_sphere();
+        }
         scattered.set(&rec.p, &(target - rec.p));
         attenuation.set(&self.albedo);
         true

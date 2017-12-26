@@ -19,7 +19,8 @@ pub fn get_rng() -> &'static mut ThreadRng {
 
 #[inline]
 pub fn rand_double() -> f64 {
-    unsafe {
-        RNG.as_mut().unwrap().gen::<f64>()
-    }
+    rand::thread_rng().gen::<f64>()
+    // unsafe {
+    //     RNG.as_mut().unwrap().gen::<f64>()
+    // }
 }
