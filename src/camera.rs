@@ -1,8 +1,8 @@
-use vector::Vec3;
 use ray::Ray;
+use sampling;
 use std::f64::consts::PI;
 use vector::*;
-use sampling;
+use vector::Vec3;
 
 pub struct Camera {
     pub origin: Vec3,
@@ -12,7 +12,10 @@ pub struct Camera {
     pub lens_radius: f64,
     pub u: Vec3,
     pub v: Vec3,
-    pub w: Vec3
+    pub w: Vec3,
+
+    // making serialization easier
+    params: CameraParams
 }
 
 impl Camera {
@@ -36,7 +39,16 @@ impl Camera {
             lens_radius: aperture / 2.0,
             u: u,
             v: v,
-            w: w
+            w: w,
+            params: CameraParams {
+                look_from: *look_from,
+                look_at: *look_at,
+                vup: *vup,
+                vfov: vfov,
+                aspect: aspect,
+                aperture: aperture,
+                focus_dist: focus_dist
+            }
         }
     }
     pub fn get_ray(&self, s: f64, t: f64) -> Ray {
@@ -48,3 +60,35 @@ impl Camera {
                  t * self.vertical - self.origin - offset)
     }
 }
+
+//////////////////////////////////////////////////////////////////////////////
+// serialization
+
+#[derive(Clone, Copy, Debug)]
+pub struct CameraParams {
+    pub look_from: Vec3,
+    pub look_at: Vec3,
+    pub vup: Vec3,
+    pub vfov: f64,
+    pub aspect: f64,
+    pub aperture: f64,
+    pub focus_dist: f64
+}
+
+// impl FromParam for Camera {
+//     type Param = CameraParams;
+
+//     fn thaw(params: CameraParams) -> Camera {
+//         Camera::new(&params.look_from,
+//                     &params.look_at,
+//                     &params.vup,
+//                     params.vfov,
+//                     params.aspect,
+//                     params.aperture,
+//                     params.focus_dist)
+//     }
+
+//     fn freeze(&self) -> CameraParams {
+//         self.params
+//     }
+// }

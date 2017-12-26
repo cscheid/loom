@@ -3,10 +3,14 @@ use vector::Vec3;
 use ray::Ray;
 use hitable::*;
 use random::*;
+use serializable::*;
 
 use std::rc::Rc;
 use std::fmt;
 use std::fmt::Debug;
+use serde_json::{Map, Value};
+
+//////////////////////////////////////////////////////////////////////////////
 
 #[derive(Debug)]
 pub struct Mixture {
@@ -28,6 +32,14 @@ impl Material for Mixture {
     fn debug(&self, f: &mut fmt::Formatter) -> fmt::Result {
         self.fmt(f)
     }
+
+    // fn to_json(&self) -> Value {
+    //     let mut m = Map::new();
+    //     m.insert("mat_1".to_string(), self.mat_1.to_json());
+    //     m.insert("mat_2".to_string(), self.mat_2.to_json());
+    //     m.insert("u".to_string(), self.u.into());
+    //     tagged_object("mixture".to_string(), m)
+    // }
 }
 
 impl Mixture {

@@ -2,7 +2,11 @@ use ray::Ray;
 use vector::Vec3;
 use hitable::HitRecord;
 use std::fmt;
+use serde_json::Value;
+use std::rc::Rc;
 
+//////////////////////////////////////////////////////////////////////////////
+    
 pub trait Material {
     fn scatter(&self, ray: &Ray, hit_record: &HitRecord,
                attenuation: &mut Vec3, scattered: &mut Ray) -> bool;

@@ -1,10 +1,16 @@
+#[macro_use]
+extern crate serde_derive;
+
 extern crate rand;
 extern crate getopts;
+extern crate serde;
+extern crate serde_json;
 
 mod aabb;
 mod background;
 mod bvh;
 mod camera;
+mod deserialize;
 mod dielectric;
 mod hitable;
 mod hitable_list;
@@ -14,6 +20,7 @@ mod metal;
 mod mixture;
 mod random;
 mod ray;
+mod serializable;
 mod sampling;
 mod sphere;
 mod vector;
@@ -21,6 +28,7 @@ mod vector;
 use background::*;
 use bvh::BVH;
 use camera::Camera;
+use deserialize::*;
 use dielectric::Dielectric;
 use hitable_list::*;
 use lambertian::Lambertian;
@@ -41,6 +49,8 @@ use std::io::BufWriter;
 use std::io::Write;
 use std::rc::Rc;
 use std::time::SystemTime;
+
+use serde_json::*;
 
 //////////////////////////////////////////////////////////////////////////////
 
@@ -233,34 +243,38 @@ struct Args {
 }
 
 fn main() {
-    random::init_rng();
+    println!("{:?}", deserialize_vec3(&serde_json::from_str("[1, 2, 3]").unwrap()));
+    println!("{:?}", deserialize_vec3(&serde_json::from_str("[1, 2, 3, 4]").unwrap()));
+    println!("{:?}", deserialize_vec3(&serde_json::from_str("[1, 2]").unwrap()));
+    println!("{:?}", deserialize_vec3(&serde_json::from_str("[\"asda\", 2, 3]").unwrap()));
+    // random::init_rng();
     
-    let args: Vec<String> = env::args().collect();
+    // let args: Vec<String> = env::args().collect();
 
-    let mut opts = Options::new();
-    opts.optopt("o", "output", "set output file name", "NAME");
-    opts.optopt("i", "input", "set interval between saving intermediate files", "NAME");
-    opts.optopt("w", "width", "set image width in pixels", "NAME");
-    opts.optopt("h", "height", "set image height in pixels", "NAME");
-    opts.optopt("s", "samples", "set number of samples per pixel", "NAME");
-    opts.optopt("f", "fov", "set field of view in degrees", "NAME");
-    opts.optopt("a", "aperture", "set aperture diameter", "NAME");
-    opts.optopt("d", "distance", "set focus distance", "NAME");
-    opts.optflag("?", "help", "print this help menu");
+    // let mut opts = Options::new();
+    // opts.optopt("o", "output", "set output file name", "NAME");
+    // opts.optopt("i", "input", "set interval between saving intermediate files", "NAME");
+    // opts.optopt("w", "width", "set image width in pixels", "NAME");
+    // opts.optopt("h", "height", "set image height in pixels", "NAME");
+    // opts.optopt("s", "samples", "set number of samples per pixel", "NAME");
+    // opts.optopt("f", "fov", "set field of view in degrees", "NAME");
+    // opts.optopt("a", "aperture", "set aperture diameter", "NAME");
+    // opts.optopt("d", "distance", "set focus distance", "NAME");
+    // opts.optflag("?", "help", "print this help menu");
 
-    let matches = match opts.parse(&args[1..]) {
-        Ok(m) => { m }
-        Err(f) => { panic!(f.to_string()) }
-    };
+    // let matches = match opts.parse(&args[1..]) {
+    //     Ok(m) => { m }
+    //     Err(f) => { panic!(f.to_string()) }
+    // };
 
-    write_image(&(Args {
-        w: matches.opt_str("w").and_then(|x| x.parse::<usize>().ok()),
-        h: matches.opt_str("h").and_then(|x| x.parse::<usize>().ok()),
-        s: matches.opt_str("s").and_then(|x| x.parse::<usize>().ok()),
-        f: matches.opt_str("f").and_then(|x| x.parse::<f64>().ok()),
-        a: matches.opt_str("a").and_then(|x| x.parse::<f64>().ok()),
-        d: matches.opt_str("d").and_then(|x| x.parse::<f64>().ok()),
-        i: matches.opt_str("i").and_then(|x| x.parse::<u64>().ok()),
-        o: matches.opt_str("o")
-    }));
+    // write_image(&(Args {
+    //     w: matches.opt_str("w").and_then(|x| x.parse::<usize>().ok()),
+    //     h: matches.opt_str("h").and_then(|x| x.parse::<usize>().ok()),
+    //     s: matches.opt_str("s").and_then(|x| x.parse::<usize>().ok()),
+    //     f: matches.opt_str("f").and_then(|x| x.parse::<f64>().ok()),
+    //     a: matches.opt_str("a").and_then(|x| x.parse::<f64>().ok()),
+    //     d: matches.opt_str("d").and_then(|x| x.parse::<f64>().ok()),
+    //     i: matches.opt_str("i").and_then(|x| x.parse::<u64>().ok()),
+    //     o: matches.opt_str("o")
+    // }));
 }

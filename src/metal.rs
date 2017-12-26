@@ -3,10 +3,12 @@ use vector::Vec3;
 use vector;
 use ray::Ray;
 use hitable::*;
+use serializable::*;
 
 use std::rc::Rc;
 use std::fmt;
 use std::fmt::Debug;
+use serde_json::{Map, Value};
 
 #[derive(Debug)]
 pub struct Metal {
@@ -25,6 +27,12 @@ impl Material for Metal {
     fn debug(&self, f: &mut fmt::Formatter) -> fmt::Result {
         self.fmt(f)
     }
+
+    // fn to_json(&self) -> Value {
+    //     let mut m = Map::new();
+    //     m.insert("albedo", self.albedo);
+    //     tagged_object("metal", m)
+    // }
 }
 
 impl Metal {
