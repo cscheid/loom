@@ -16,7 +16,7 @@ pub struct Camera {
     pub w: Vec3,
 
     // making serialization easier
-    params: CameraParams
+    pub params: CameraParams
 }
 
 impl Camera {

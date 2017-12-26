@@ -1,0 +1,40 @@
+{
+    "background": "overhead_light",
+    "camera": {
+	"look_from":  [-0.2, 0.5, -2.0],
+	"look_at":    [0.0, 0.0, -1.0],
+	"vup":        [0.0, 1.0, 0.0],
+	"vfov":       60,
+	"aspect":     1.6,
+	"aperture":   0.05,
+	"focus_dist": 0.8
+    },
+    "object_list": [
+	{
+	    "class": "sphere",
+	    "object": {
+		"center": [0.0, 0.0, -1.0],
+		"radius": 0.5,
+		"material": {
+		    "class": "lambertian",
+		    "object": {
+			"albedo": [0.9, 0.5, 0.0]
+		    }
+		}
+	    }
+	},
+	{
+	    "class": "sphere",
+	    "object": {
+		"center": [0.0, -100.5, -1.0],
+		"radius": 100,
+		"material": {
+		    "class": "lambertian",
+		    "object": {
+			"albedo": [1, 1, 1]
+		    }
+		}
+	    }
+	}
+    ]
+}

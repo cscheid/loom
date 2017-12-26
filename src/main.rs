@@ -48,6 +48,7 @@ use std::cmp;
 use std::env;
 use std::fs::File;
 use std::io::BufWriter;
+use std::io::BufReader;
 use std::io::Write;
 use std::rc::Rc;
 use std::time::SystemTime;
@@ -56,57 +57,50 @@ use serde_json::*;
 
 //////////////////////////////////////////////////////////////////////////////
 
-fn scene() -> Vec<Box<Hitable>>
-{
-    let mut obj_list = Vec::<Box<Hitable>>::new();
-    let complexity = 5;
-    let count = 2 * complexity + 1;
-    let f = (count * 2) as f64;
-    obj_list.push(Box::new(
-        Sphere::new(Vec3::new(0.0, -100.0 - 0.25, -1.0), 100.0,
-                    Lambertian::new(&Vec3::new(0.9, 0.9, 0.9)))));
-    for x in -complexity..complexity+1 {
-        for y in -complexity..complexity+1 {
-            for z in -complexity..complexity+1 {
-                let xf = (x as f64) / f;
-                let yf = (y as f64) / f;
-                let zf = (z as f64) / f;
-                let glass = (x + y + z + 3 * complexity) % 2 == 1;
-                let material = if glass {
-                    Dielectric::new(1.5)
-                } else {
-                    Mixture::new(Metal::new(&Vec3::new(1.0, 1.0, 1.0)),
-                                 Lambertian::new(&Vec3::new(xf+0.5, yf+0.5, zf+0.5)),
-                                 0.8)
-                };
-                obj_list.push(Box::new(Sphere::new(Vec3::new(xf,
-                                                             yf,
-                                                             -1.0+zf), 0.95/(2.0*f),
-                                                   Rc::clone(&material))));
-                // make glass spheres hollow
-                // if glass {
-                //     obj_list.push(Box::new(Sphere::new(Vec3::new(xf,
-                //                                                  yf,
-                //                                                  -1.0+zf), -0.9/(2.0*f),
-                //                                        Rc::clone(&material))));
-                // }
-            }
-        }
-    }
-    obj_list
-}
+// fn scene() -> Vec<Box<Hitable>>
+// {
+//     let mut obj_list = Vec::<Box<Hitable>>::new();
+//     let complexity = 5;
+//     let count = 2 * complexity + 1;
+//     let f = (count * 2) as f64;
+//     obj_list.push(Box::new(
+//         Sphere::new(Vec3::new(0.0, -100.0 - 0.25, -1.0), 100.0,
+//                     Lambertian::new(&Vec3::new(0.9, 0.9, 0.9)))));
+//     for x in -complexity..complexity+1 {
+//         for y in -complexity..complexity+1 {
+//             for z in -complexity..complexity+1 {
+//                 let xf = (x as f64) / f;
+//                 let yf = (y as f64) / f;
+//                 let zf = (z as f64) / f;
+//                 let glass = (x + y + z + 3 * complexity) % 2 == 1;
+//                 let material = if glass {
+//                     Dielectric::new(1.5)
+//                 } else {
+//                     Mixture::new(Metal::new(&Vec3::new(1.0, 1.0, 1.0)),
+//                                  Lambertian::new(&Vec3::new(xf+0.5, yf+0.5, zf+0.5)),
+//                                  0.8)
+//                 };
+//                 obj_list.push(Box::new(Sphere::new(Vec3::new(xf,
+//                                                              yf,
+//                                                              -1.0+zf), 0.95/(2.0*f),
+//                                                    Rc::clone(&material))));
+//                 // make glass spheres hollow
+//                 // if glass {
+//                 //     obj_list.push(Box::new(Sphere::new(Vec3::new(xf,
+//                 //                                                  yf,
+//                 //                                                  -1.0+zf), -0.9/(2.0*f),
+//                 //                                        Rc::clone(&material))));
+//                 // }
+//             }
+//         }
+//     }
+//     obj_list
+// }
 
 //////////////////////////////////////////////////////////////////////////////
 
-// Rust doesn't let me use max() because of NaNs, etc. Huh.
-#[inline]
-fn fmax(v1: f64, v2: f64) -> f64
-{
-    if v1 > v2 { v1 } else { v2 }
-}
-
 fn color(ray: &Ray, world: &Hitable,
-         background: &Background,
+         background: &Rc<Background>,
          depth: i32) -> Vec3 where
 {
     let mut r = HitRecord::new();
@@ -168,30 +162,29 @@ fn write_multiple_images_to_file(image: &Vec<Vec<Vec3>>, ns: usize, name: &Strin
 
 fn write_image(args: &Args)
 {
-    let nx           = args.w.unwrap_or(200);
-    let ny           = args.h.unwrap_or(100);
-    let ns           = args.s.unwrap_or(100);
-    let fov          = args.f.unwrap_or(90.0);
-    let aperture     = args.a.unwrap_or(0.0);
-    let focus_dist   = args.d.unwrap_or(1.0);
-    let interval     = args.i.unwrap_or(600);
+    let interval     = args.t.unwrap_or(600);
     
-    let default_name = "out".to_string();
-    let output_name  = &args.o.as_ref().unwrap_or(&default_name);
-    
-    let world = scene();
-    // let bvh_world = Box::new(HitableList::new(world));
-    let bvh_world = BVH::build(world);
+    let default_output_name = "out".to_string();
+    let output_name         = &args.o.as_ref().unwrap_or(&default_output_name);
 
-    let background = overhead_light();
-    
-    let camera = Camera::new(
-        &Vec3::new(-0.2, 0.5, -2.0),
-        &Vec3::new(0.0, 0.0, -1.0),
-        &Vec3::new(0.0, 1.0, 0.0),
-        fov, (nx as f64)/(ny as f64),
-        aperture, focus_dist
-    );
+    let default_input_name  = "/dev/stdin".to_string();
+    let input_name          = &args.i.as_ref().unwrap_or(&default_input_name);
+
+    let br = BufReader::new(File::open(input_name).unwrap());
+    let json_value = serde_json::from_reader(br).unwrap();
+
+    let scene = deserialize_scene(&json_value).unwrap();
+
+    let bvh_world = BVH::build(scene.object_list);
+
+    let background = scene.background;
+
+    let camera = scene.camera;
+
+    let ny           = args.h.unwrap_or(200);
+    let nx           = args.w.unwrap_or_else(|| ((ny as f64) * camera.params.aspect).round() as usize);
+    let ns           = args.s.unwrap_or(100);
+
     let mut rng = rand::thread_rng();
 
     let mut output_image = Vec::<Vec<Vec3>>::new();
@@ -271,9 +264,9 @@ fn main() {
     };
 
     write_image(&(Args {
-        f: matches.opt_str("f").and_then(|x| x.parse::<f64>().ok()),
-        a: matches.opt_str("a").and_then(|x| x.parse::<f64>().ok()),
-        d: matches.opt_str("d").and_then(|x| x.parse::<f64>().ok()),
+        // f: matches.opt_str("f").and_then(|x| x.parse::<f64>().ok()),
+        // a: matches.opt_str("a").and_then(|x| x.parse::<f64>().ok()),
+        // d: matches.opt_str("d").and_then(|x| x.parse::<f64>().ok()),
 
         s: matches.opt_str("s").and_then(|x| x.parse::<usize>().ok()),
         w: matches.opt_str("w").and_then(|x| x.parse::<usize>().ok()),
