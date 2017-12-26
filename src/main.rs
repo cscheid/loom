@@ -20,6 +20,7 @@ mod metal;
 mod mixture;
 mod random;
 mod ray;
+mod scene;
 mod serializable;
 mod sampling;
 mod sphere;
@@ -36,6 +37,7 @@ use metal::Metal;
 use mixture::Mixture;
 use rand::Rng;
 use ray::Ray;
+use scene::Scene;
 use vector::Vec3;
 use hitable::*;
 use sphere::*;
@@ -235,46 +237,50 @@ struct Args {
     pub w: Option<usize>,
     pub h: Option<usize>,
     pub s: Option<usize>,
-    pub f: Option<f64>,
-    pub a: Option<f64>,
-    pub d: Option<f64>,
+
+    // pub f: Option<f64>,
+    // pub a: Option<f64>,
+    // pub d: Option<f64>,
+
     pub o: Option<String>,
-    pub i: Option<u64>
+    pub i: Option<String>,
+    pub t: Option<u64>
 }
 
 fn main() {
-    println!("{:?}", deserialize_vec3(&serde_json::from_str("[1, 2, 3]").unwrap()));
-    println!("{:?}", deserialize_vec3(&serde_json::from_str("[1, 2, 3, 4]").unwrap()));
-    println!("{:?}", deserialize_vec3(&serde_json::from_str("[1, 2]").unwrap()));
-    println!("{:?}", deserialize_vec3(&serde_json::from_str("[\"asda\", 2, 3]").unwrap()));
-    // random::init_rng();
+    random::init_rng();
     
-    // let args: Vec<String> = env::args().collect();
+    let args: Vec<String> = env::args().collect();
 
-    // let mut opts = Options::new();
-    // opts.optopt("o", "output", "set output file name", "NAME");
-    // opts.optopt("i", "input", "set interval between saving intermediate files", "NAME");
-    // opts.optopt("w", "width", "set image width in pixels", "NAME");
-    // opts.optopt("h", "height", "set image height in pixels", "NAME");
-    // opts.optopt("s", "samples", "set number of samples per pixel", "NAME");
+    let mut opts = Options::new();
+    opts.optopt("i", "input", "set input file name", "NAME");
+    opts.optopt("o", "output", "set output file name", "NAME");
+    opts.optopt("t", "interval", "set interval between saving intermediate files", "NAME");
+
+    opts.optopt("w", "width", "set image width in pixels", "NAME");
+    opts.optopt("h", "height", "set image height in pixels", "NAME");
+    opts.optopt("s", "samples", "set number of samples per pixel", "NAME");
     // opts.optopt("f", "fov", "set field of view in degrees", "NAME");
     // opts.optopt("a", "aperture", "set aperture diameter", "NAME");
     // opts.optopt("d", "distance", "set focus distance", "NAME");
-    // opts.optflag("?", "help", "print this help menu");
+    opts.optflag("?", "help", "print this help menu");
 
-    // let matches = match opts.parse(&args[1..]) {
-    //     Ok(m) => { m }
-    //     Err(f) => { panic!(f.to_string()) }
-    // };
+    let matches = match opts.parse(&args[1..]) {
+        Ok(m) => { m }
+        Err(f) => { panic!(f.to_string()) }
+    };
 
-    // write_image(&(Args {
-    //     w: matches.opt_str("w").and_then(|x| x.parse::<usize>().ok()),
-    //     h: matches.opt_str("h").and_then(|x| x.parse::<usize>().ok()),
-    //     s: matches.opt_str("s").and_then(|x| x.parse::<usize>().ok()),
-    //     f: matches.opt_str("f").and_then(|x| x.parse::<f64>().ok()),
-    //     a: matches.opt_str("a").and_then(|x| x.parse::<f64>().ok()),
-    //     d: matches.opt_str("d").and_then(|x| x.parse::<f64>().ok()),
-    //     i: matches.opt_str("i").and_then(|x| x.parse::<u64>().ok()),
-    //     o: matches.opt_str("o")
-    // }));
+    write_image(&(Args {
+        f: matches.opt_str("f").and_then(|x| x.parse::<f64>().ok()),
+        a: matches.opt_str("a").and_then(|x| x.parse::<f64>().ok()),
+        d: matches.opt_str("d").and_then(|x| x.parse::<f64>().ok()),
+
+        s: matches.opt_str("s").and_then(|x| x.parse::<usize>().ok()),
+        w: matches.opt_str("w").and_then(|x| x.parse::<usize>().ok()),
+        h: matches.opt_str("h").and_then(|x| x.parse::<usize>().ok()),
+
+        t: matches.opt_str("t").and_then(|x| x.parse::<u64>().ok()),
+        i: matches.opt_str("i"),
+        o: matches.opt_str("o")
+    }));
 }
