@@ -63,7 +63,7 @@ impl AABB {
                            (self._max[a] - r.origin()[a]) * inv_d);
             tmin = ffmax(t0, tmin);
             tmax = ffmin(t1, tmax);
-            if tmax <= tmin {
+            if tmax < tmin {
                 return false;
             }
         }
@@ -79,4 +79,23 @@ pub fn surrounding_box(box0: &AABB, box1: &AABB) -> AABB {
                           ffmax(box0.max()[1], box1.max()[1]),
                           ffmax(box0.max()[2], box1.max()[2]));
     AABB::new(small, big)
+}
+
+
+#[test]
+fn it_works()
+{
+    let mut box1 = AABB::from_point(Vec3::new(1.0, 1.0, 1.0));
+    box1.update(&Vec3::new(2.0, 2.0, 2.0));
+
+    assert!(box1.hit(&Ray::new(Vec3::new(1.5, 1.5, 0.0),
+                               Vec3::new(0.0, 0.0, 1.0)),
+                     0.0001, 1e20));
+
+    assert!(!box1.hit(&Ray::new(Vec3::new(1.5, 1.5, 0.0),
+                                Vec3::new(0.0, 0.0, 1.0)),
+                      0.0001, 0.5));
+    assert!(!box1.hit(&Ray::new(Vec3::new(1.5, 1.5, 0.0),
+                                Vec3::new(1.6, 0.0, 1.0)),
+                      0.0001, 1e20));
 }

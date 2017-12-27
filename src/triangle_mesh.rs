@@ -116,9 +116,12 @@ impl TriangleMesh {
 
     fn hit_bvh(&self, current_node: &Box<MeshBVH>,
                r: &Ray, t_min: f64, t_max: f64, rec: &mut HitRecord) -> bool {
+        eprintln!("hit_bvh {:?} ", current_node.bbox);
         if current_node.bbox.hit(r, t_min, t_max) {
+            eprintln!("Hit.");
             match &current_node.left {
                 &None => {
+                    eprintln!("Leaf");
                     let mut result = None;
                     for i in current_node.min_ix..current_node.max_ix {
                         if let Some(hit_t) = self.triangles[i].hit(r) {
@@ -152,6 +155,7 @@ impl TriangleMesh {
                     }
                 },
                 &Some(ref left_node) => {
+                    eprintln!("Not leaf");
                     let mut left_rec = HitRecord::new();
                     let mut right_rec = HitRecord::new();
                     let right_node = &current_node.right.as_ref().unwrap();
@@ -176,6 +180,7 @@ impl TriangleMesh {
                 }
             }
         } else {
+            eprintln!("Not hit.");
             false
         }
     }
@@ -232,13 +237,16 @@ impl Hitable for TriangleMesh {
 fn it_works() {
     let verts = vec![Vec3::new(0.0, 0.0, 0.0),
                      Vec3::new(1.0, 0.0, 0.0),
-                     Vec3::new(0.0, 1.0, 0.0),
-                     Vec3::new(0.0, 0.0, 1.0)];
-    let indices = vec![0, 1, 2,
-                       1, 0, 3,
-                       2, 1, 3,
-                       0, 2, 3];
+                     Vec3::new(0.0, 1.0, 0.0)];
+    let indices = vec![0, 1, 2];
     let mesh = TriangleMesh::new(Lambertian::new(&Vec3::new(1.0, 1.0, 1.0)),
                                  verts,
                                  indices);
+
+    let ray = Ray::new(Vec3::new(0.25, 0.25, -1.0),
+                       Vec3::new(0.0, 0.0, 1.0));
+
+    let mut hr = HitRecord::new();
+
+    assert!(mesh.hit(&ray, 0.00001, 1e30, &mut hr));
 }
