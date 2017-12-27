@@ -61,7 +61,7 @@ fn color(ray: &Ray, world: &Hitable,
 {
     let mut r = HitRecord::new();
 
-    if world.hit(ray, 0.001, 1e20, &mut r) {
+    if world.hit(ray, 0.00001, 1e20, &mut r) {
         let mut scattered = Ray::zero();
         let mut attenuation = Vec3::zero();
         if depth < 50 &&
