@@ -17,6 +17,19 @@ impl AABB {
             _max: Vec3::new(-1e20, -1e20, -1e20)
         }
     }
+    pub fn from_point(p: Vec3) -> AABB {
+        AABB {
+            _min: p,
+            _max: p
+        }
+    }
+    pub fn from_points(ps: &[Vec3]) -> AABB {
+        let mut result = AABB::zero();
+        for p in ps {
+            result.update(p);
+        }
+        result
+    }
     pub fn new(min: Vec3, max: Vec3) -> AABB {
         AABB {
             _min: min,
@@ -29,6 +42,14 @@ impl AABB {
     }
     pub fn max(&self) -> Vec3 {
         self._max
+    }
+    pub fn update(&mut self, p: &Vec3) {
+        self._min[0] = ffmin(self._min[0], p[0]);
+        self._min[1] = ffmin(self._min[1], p[1]);
+        self._min[2] = ffmin(self._min[2], p[2]);
+        self._max[0] = ffmax(self._max[0], p[0]);
+        self._max[1] = ffmax(self._max[1], p[1]);
+        self._max[2] = ffmax(self._max[2], p[2]);
     }
 
     pub fn hit(&self, r: &Ray, _tmin: f64, _tmax: f64) -> bool {

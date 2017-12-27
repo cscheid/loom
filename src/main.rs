@@ -1,6 +1,3 @@
-#[macro_use]
-extern crate serde_derive;
-
 extern crate rand;
 extern crate getopts;
 extern crate serde;
@@ -22,9 +19,9 @@ mod random;
 mod rectangle;
 mod ray;
 mod scene;
-mod serializable;
 mod sampling;
 mod sphere;
+mod triangle_mesh;
 mod vector;
 mod tests;
 

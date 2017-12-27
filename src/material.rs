@@ -2,8 +2,6 @@ use ray::Ray;
 use vector::Vec3;
 use hitable::HitRecord;
 use std::fmt;
-use serde_json::Value;
-use std::rc::Rc;
 
 //////////////////////////////////////////////////////////////////////////////
     

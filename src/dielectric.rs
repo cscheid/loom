@@ -4,13 +4,10 @@ use vector;
 use ray::Ray;
 use hitable::*;
 use random::*;
-use serializable::*;
 
 use std::rc::Rc;
 use std::fmt;
 use std::fmt::Debug;
-
-use serde_json::{Map,Value};
 
 #[derive(Debug)]
 pub struct Dielectric {
@@ -61,12 +58,6 @@ impl Material for Dielectric {
     fn debug(&self, f: &mut fmt::Formatter) -> fmt::Result {
         self.fmt(f)
     }
-
-    // fn to_json(&self) -> Value {
-    //     let mut m = Map::new();
-    //     m.insert("refraction_index".to_string(), self.refraction_index.into());
-    //     tagged_object("dielectric".to_string(), m)
-    // }
 }
 
 

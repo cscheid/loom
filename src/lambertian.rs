@@ -3,12 +3,10 @@ use vector::Vec3;
 use sampling;
 use ray::Ray;
 use hitable::*;
-use serializable::*;
 
 use std::rc::Rc;
 use std::fmt;
 use std::fmt::Debug;
-use serde_json::{Map, Value};
 
 #[derive(Debug)]
 pub struct Lambertian {
@@ -33,12 +31,6 @@ impl Material for Lambertian {
     fn debug(&self, f: &mut fmt::Formatter) -> fmt::Result {
         self.fmt(f)
     }
-
-    // fn to_json(&self) -> Value {
-    //     let mut m = Map::new();
-    //     m.insert("albedo".to_string(), self.albedo);
-    //     tagged_object("lambertian".to_string(), m)
-    // }
 }
 
 impl Lambertian {

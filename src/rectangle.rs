@@ -6,10 +6,10 @@ use ray::Ray;
 use std::rc::Rc;
 use vector::Vec3;
 use vector;
-use tests::*;
     
 // for tests
-use lambertian::Lambertian;
+// use tests::*;
+// use lambertian::Lambertian;
 
 //////////////////////////////////////////////////////////////////////////////
 

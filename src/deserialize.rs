@@ -1,7 +1,5 @@
-use serde_json::*;
 use background::*;
 use camera::*;
-use vector::*;
 use dielectric::*;
 use hitable::*;
 use hitable_list::*;
@@ -11,12 +9,19 @@ use metal::*;
 use mixture::*;
 use rectangle::*;
 use scene::*;
+use serde_json::*;
 use sphere::*;
+use triangle_mesh::*;
+use vector::*;
 
+use std::fs::File;
+use std::io::BufReader;
+use std::iter::*;
 use std::option::*;
 use std::rc::Rc;
 use std::vec::*;
-use std::iter::*;
+
+use serde_json;
 
 //////////////////////////////////////////////////////////////////////////////
 
@@ -168,6 +173,73 @@ pub fn deserialize_rectangle(v: &Value) -> Option<Box<Hitable>>
     }
 }
 
+
+pub fn deserialize_triangle_mesh_data(v: &Value) ->
+    Option<(Vec<Vec3>, Vec<usize>)>
+{
+    match v {
+        &Value::Object(ref m) => {
+            let verts = match &m["vertices"] {
+                &Value::Array(ref a) => {
+                    let mut objs = Vec::from_iter(a.iter().map(deserialize_vec3));
+                    if objs.iter().any(|x| !x.is_none()) {
+                        None
+                    } else {
+                        Some(objs.drain(..)
+                             .map(|x| x.unwrap())
+                             .collect())
+                    }
+                }, &_ => None
+            };
+            let indices = match &m["indices"] {
+                &Value::Array(ref a) => {
+                    let mut objs = Vec::from_iter(a.iter().map(|x| x.as_u64()));
+                    if objs.iter().any(|x| !x.is_none()) {
+                        None
+                    } else {
+                        Some(objs.drain(..)
+                             .map(|x| x.unwrap() as usize)
+                             .collect())
+                    }
+                }, &_ => None
+            };
+            if verts.is_none() || indices.is_none() {
+                None
+            } else {
+                Some((verts.unwrap(), indices.unwrap()))
+            }
+        },
+        _ => None
+    }
+}
+
+pub fn deserialize_triangle_mesh(v: &Value) -> Option<Box<Hitable>>
+{
+    match v {
+        &Value::Object(ref m) => {
+            let file_name = m["file_name"].as_str();
+            let material = deserialize_material(&m["material"]);
+
+            if file_name.is_none() || material.is_none() {
+                return None;
+            }
+            
+            let br = BufReader::new(File::open(file_name.unwrap()).unwrap());
+            let json_value = serde_json::from_reader(br).unwrap();
+
+            let mesh_data = deserialize_triangle_mesh_data(&json_value);
+            if mesh_data.is_none() {
+                return None;
+            }
+            let (tris, indices) = mesh_data.unwrap();
+            Some(Box::new(TriangleMesh::new(material.unwrap(),
+                                            tris,
+                                            indices)))
+        },
+        _ => None
+    }
+}
+
 pub fn deserialize_hitable_list(v: &Value) -> Option<Box<Hitable>>
 {
     match v {
@@ -191,6 +263,20 @@ pub fn deserialize_hitable_list(v: &Value) -> Option<Box<Hitable>>
 pub fn deserialize_background(v: &Value) -> Option<Rc<Background>>
 {
     match v {
+        &Value::Object(ref m) => {
+            let class = m["class"].as_str();
+            let object = &m["object"];
+            if class.is_none() {
+                None
+            } else {
+                let name = class.unwrap();
+                if name == "constant" {
+                    deserialize_constant_background(object)
+                } else {
+                    None
+                }
+            }
+        },
         &Value::String(ref m) => {
             if m == &"sky".to_string() {
                 Some(Rc::new(sky()))
@@ -200,6 +286,21 @@ pub fn deserialize_background(v: &Value) -> Option<Rc<Background>>
                 None
             }
         }
+        _ => None
+    }
+}
+
+pub fn deserialize_constant_background(v: &Value) -> Option<Rc<Background>>
+{
+    match v {
+        &Value::Object(ref m) => {
+            let color = deserialize_vec3(&m["color"]);
+            if color.is_none() {
+                None
+            } else {
+                Some(Rc::new(constant(color.unwrap())))
+            }
+        },
         _ => None
     }
 }
@@ -247,6 +348,8 @@ pub fn deserialize_hitable(v: &Value) -> Option<Box<Hitable>>
                     deserialize_sphere(object)
                 } else if name == "hitable_list" {
                     deserialize_hitable_list(object)
+                } else if name == "triangle_mesh" {
+                    deserialize_triangle_mesh(object)
                 } else {
                     None
                 }
