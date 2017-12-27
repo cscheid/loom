@@ -1,0 +1,98 @@
+{
+    "background": "overhead_light",    
+    "camera": {
+	"look_from":  [-3.0,  0.25,  0.0],
+	"look_at":    [0.0,   0.25,  0.0],
+	"vup":        [0.0,   1.0,   0.0],
+	"vfov":       10,
+	"aspect":     1.6,
+	"aperture":   0.0005,
+	"focus_dist": 0.8
+    },
+    "object_list": [
+	{
+	    "class": "rectangle",
+	    "object": {
+		"bottom_left": [2.0, 0.0, -2.0],
+		"right": [-4.0, 0.0, 0.0],
+		"up": [0.0, 0.0, 4.0],
+		"material": {
+		    "class": "lambertian",
+		    "object": {
+			"albedo": [1, 1, 1]
+		    }
+		}
+	    }
+	},
+	{
+	    "class": "rectangle",
+	    "object": {
+		"bottom_left": [-0.25, 0.0, -0.25],
+		"right": [0.5, 0.0, 0.0],
+		"up": [0.0, 0.5, 0.0],
+		"material": {
+		    "class": "lambertian",
+		    "object": {
+			"albedo": [0.8, 0.2, 0.2]
+		    }
+		}
+	    }
+	},
+	{
+	    "class": "rectangle",
+	    "object": {
+		"bottom_left": [0.25, 0.0, 0.25],
+		"right": [-0.5, 0.0, 0.0],
+		"up": [0.0, 0.5, 0.0],
+		"material": {
+		    "class": "lambertian",
+		    "object": {
+			"albedo": [0.2, 0.8, 0.2]
+		    }
+		}
+	    }
+	},
+	{
+	    "class": "rectangle",
+	    "object": {
+		"bottom_left": [0.25, 0.0, -0.25],
+		"right": [0.0, 0.0, 0.5],
+		"up": [0.0, 0.5, 0.0],
+		"material": {
+		    "class": "lambertian",
+		    "object": {
+			"albedo": [1, 1, 0.8]
+		    }
+		}
+	    }
+	},
+	{
+	    "class": "rectangle",
+	    "object": {
+		"bottom_left": [-0.25, 0.5, -0.25],
+		"right":       [ 0.5,  0.0,  0.0],
+		"up":          [ 0.0,  0.0,  0.5],
+		"material": {
+		    "class": "lambertian",
+		    "object": {
+			"albedo": [1, 1, 1]
+		    }
+		}
+	    }
+	},
+	{
+	    "class": "sphere",
+	    "object": {
+		"center": [0.0, 0.1, 0.0],
+		"radius": 0.1,
+		"material": {
+		    "class": "lambertian",
+		    "object": {
+			"albedo": [0.5, 0.5, 0.7]
+		    }
+		}
+	    }
+	}
+
+    ]
+}

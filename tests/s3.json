@@ -1,0 +1,40 @@
+{
+    "background": "overhead_light",    
+    "camera": {
+	"look_from":  [0.0,   0.2,  3.0],
+	"look_at":    [0.0,   0.1,  0.0],
+	"vup":        [0.0,   1.0,  0.0],
+	"vfov":       5,
+	"aspect":     1.6,
+	"aperture":   0.0,
+	"focus_dist": 0.8
+    },
+    "object_list": [
+	{
+	    "class": "rectangle",
+	    "object": {
+		"bottom_left": [2.0, 0.035, -2.0],
+		"right": [-4.0, 0.0, 0.0],
+		"up": [0.0, 0.0, 4.0],
+		"material": {
+		    "class": "lambertian",
+		    "object": {
+			"albedo": [0.7, 0.8, 0.9]
+		    }
+		}
+	    }
+	},
+	{
+	    "class": "triangle_mesh",
+	    "object": {
+		"file_name": "tests/bunny.json",
+		"material": {
+		    "class": "lambertian",
+		    "object": {
+			"albedo": [1.0, 0.6, 0.2]
+		    }
+		}
+	    }
+	}
+    ]
+}

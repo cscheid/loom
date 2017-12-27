@@ -1,12 +1,13 @@
-use aabb;
 use aabb::AABB;
-use vector::*;
-use std::rc::Rc;
-use std::option::Option;
-use material::Material;
+use aabb;
 use hitable::*;
-use ray::*;
 use lambertian::*; // for testing
+use material::Material;
+use ray::*;
+use std::option::Option;
+use std::rc::Rc;
+use tests::*;
+use vector::*;
 
 use rand;
 use rand::Rng;
@@ -77,8 +78,8 @@ fn build_mesh_bvh(tris: &mut Vec<Triangle>, min_ix: usize, max_ix: usize) -> Opt
             ffcmp(b1.min()[axis], b2.min()[axis])
         });
         let median_ix = len / 2;
-        let left_bvh = build_mesh_bvh(tris, min_ix, median_ix);
-        let right_bvh = build_mesh_bvh(tris, median_ix, max_ix);
+        let left_bvh = build_mesh_bvh(tris, min_ix, min_ix+median_ix);
+        let right_bvh = build_mesh_bvh(tris, min_ix+median_ix, max_ix);
         let left_bbox = left_bvh.as_ref().unwrap().bbox;
         let right_bbox = right_bvh.as_ref().unwrap().bbox;
         Some(Box::new(MeshBVH {
@@ -116,12 +117,9 @@ impl TriangleMesh {
 
     fn hit_bvh(&self, current_node: &Box<MeshBVH>,
                r: &Ray, t_min: f64, t_max: f64, rec: &mut HitRecord) -> bool {
-        eprintln!("hit_bvh {:?} ", current_node.bbox);
         if current_node.bbox.hit(r, t_min, t_max) {
-            eprintln!("Hit.");
             match &current_node.left {
                 &None => {
-                    eprintln!("Leaf");
                     let mut result = None;
                     for i in current_node.min_ix..current_node.max_ix {
                         if let Some(hit_t) = self.triangles[i].hit(r) {
@@ -155,7 +153,6 @@ impl TriangleMesh {
                     }
                 },
                 &Some(ref left_node) => {
-                    eprintln!("Not leaf");
                     let mut left_rec = HitRecord::new();
                     let mut right_rec = HitRecord::new();
                     let right_node = &current_node.right.as_ref().unwrap();
@@ -180,7 +177,6 @@ impl TriangleMesh {
                 }
             }
         } else {
-            eprintln!("Not hit.");
             false
         }
     }
@@ -243,10 +239,14 @@ fn it_works() {
                                  verts,
                                  indices);
 
-    let ray = Ray::new(Vec3::new(0.25, 0.25, -1.0),
-                       Vec3::new(0.0, 0.0, 1.0));
+    let ray1 = Ray::new(Vec3::new(0.25, 0.25, -1.0), Vec3::new(0.0, 0.0, 1.0));
+    let ray2 = Ray::new(Vec3::new(0.75, 0.75, -1.0), Vec3::new(0.0, 0.0, 1.0));
 
     let mut hr = HitRecord::new();
 
-    assert!(mesh.hit(&ray, 0.00001, 1e30, &mut hr));
+    assert!( mesh.hit(&ray1, 0.00001, 1e30, &mut hr));
+    assert!(!mesh.hit(&ray2, 0.00001, 1e30, &mut hr));
+
+    mesh.hit(&ray1, 0.00001, 1e30, &mut hr);
+    assert!(within_eps(&hr.normal, &Vec3::new(0.0, 0.0, 1.0)));
 }

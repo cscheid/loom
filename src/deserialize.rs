@@ -30,10 +30,8 @@ pub fn deserialize_vec3(v: &Value) -> Option<Vec3>
     match v {
         &Value::Array(ref ns) => {
             if ns.len() != 3 {
-                eprintln!("len != 3");
                 None
             } else if ns.iter().any(|x| !x.is_number()) {
-                eprintln!("some are not number");
                 None
             } else {
                 let x = ns[0].as_f64().unwrap();
@@ -43,7 +41,6 @@ pub fn deserialize_vec3(v: &Value) -> Option<Vec3>
             }
         }
         _ => {
-            eprintln!("Passed object not an array");
             None
         }
     }
@@ -182,7 +179,7 @@ pub fn deserialize_triangle_mesh_data(v: &Value) ->
             let verts = match &m["vertices"] {
                 &Value::Array(ref a) => {
                     let mut objs = Vec::from_iter(a.iter().map(deserialize_vec3));
-                    if objs.iter().any(|x| !x.is_none()) {
+                    if objs.iter().any(|x| x.is_none()) {
                         None
                     } else {
                         Some(objs.drain(..)
@@ -194,7 +191,7 @@ pub fn deserialize_triangle_mesh_data(v: &Value) ->
             let indices = match &m["indices"] {
                 &Value::Array(ref a) => {
                     let mut objs = Vec::from_iter(a.iter().map(|x| x.as_u64()));
-                    if objs.iter().any(|x| !x.is_none()) {
+                    if objs.iter().any(|x| x.is_none()) {
                         None
                     } else {
                         Some(objs.drain(..)
@@ -226,6 +223,7 @@ pub fn deserialize_triangle_mesh(v: &Value) -> Option<Box<Hitable>>
             
             let br = BufReader::new(File::open(file_name.unwrap()).unwrap());
             let json_value = serde_json::from_reader(br).unwrap();
+
 
             let mesh_data = deserialize_triangle_mesh_data(&json_value);
             if mesh_data.is_none() {
