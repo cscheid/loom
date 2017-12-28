@@ -8,39 +8,9 @@ extern crate serde;
 extern crate serde_json;
 extern crate bincode;
 
-mod aabb;
-mod background;
-mod bvh;
-mod camera;
-mod deserialize;
-mod dielectric;
-mod hitable;
-mod hitable_list;
-mod lambertian;
-mod material;
-mod metal;
-mod mixture;
-mod random;
-mod rectangle;
-mod ray;
-mod scene;
-mod sampling;
-mod sphere;
-mod triangle_mesh;
 mod vector;
 mod tests;
-
-use background::*;
-use bvh::BVH;
-use camera::Camera;
-use deserialize::*;
-use hitable_list::*;
-use metal::Metal;
-use rand::Rng;
-use ray::Ray;
-use scene::Scene;
 use vector::Vec3;
-use hitable::*;
 
 use getopts::Options;
 
@@ -52,8 +22,6 @@ use std::io::BufReader;
 use std::io::Write;
 use std::rc::Rc;
 use std::time::SystemTime;
-
-use serde_json::*;
 
 //////////////////////////////////////////////////////////////////////////////
 
@@ -131,7 +99,8 @@ fn combine_summaries(summary1: &ImageSummaries,
 
 fn write_sample_summaries_to_file(image: &Vec<Vec<Vec3>>, ns: usize, name: &String)
 {
-    let mut f = BufWriter::new(File::create(format!("{}.bincode", name)).unwrap());
+    // this is fairly unsafe, but screw it
+    let mut f = BufWriter::new(File::create(format!("/tmp/{}-temp.bincode", name)).unwrap());
     
     let summary = ImageSummaries {
         w: image[0].len(),
@@ -141,6 +110,10 @@ fn write_sample_summaries_to_file(image: &Vec<Vec<Vec3>>, ns: usize, name: &Stri
     };
 
     bincode::serialize_into(&mut f, &summary, bincode::Infinite);
+
+    // atomic rename to not let other processes see the partially-written files
+    std::fs::rename(format!("{}-temp.bincode", name),
+                    format!("{}.bincode", name));
 }
 
 fn load(filename: &String) -> ImageSummaries {
@@ -155,14 +128,15 @@ fn main() {
 
     let out_name = &args[1];
 
-    println!("Will attempt to load {}", &args[2]);
     let mut summary = load(&args[2]);
-    println!("Loaded {} ok.", &args[2]);
+    eprintln!("Loaded {} ok.", &args[2]);
     for arg in args.iter().skip(3) {
         let new_summary = load(arg);
-        println!("Loaded {} ok.", &arg);
+        eprintln!("Loaded {} ok.", &arg);
         summary = combine_summaries(&summary, &new_summary);
     }
+
+    eprintln!("Combined sample count: {}", summary.s);
 
     write_image_to_file(&summary.data,
                         summary.s,

@@ -202,8 +202,12 @@ fn write_image(args: &Args)
             }
         }
     }
-    let name = format!("{}-final", output_name);
-    write_multiple_images_to_file(&output_image, ns, &name);
+    if args.parallel {
+        write_sample_summaries_to_file(&output_image, ns, &output_name);
+    } else {
+        let name = format!("{}-final", output_name);
+        write_multiple_images_to_file(&output_image, ns, &name);
+    }
 }
 
 //////////////////////////////////////////////////////////////////////////////
