@@ -1,3 +1,8 @@
+pub mod lambertian;
+pub mod metal;
+pub mod dielectric;
+pub mod mixture;
+
 use ray::Ray;
 use vector::Vec3;
 use hitable::HitRecord;

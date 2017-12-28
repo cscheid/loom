@@ -1,7 +1,7 @@
 use aabb::AABB;
 use aabb;
 use hitable::*;
-use lambertian::*; // for testing
+use material::lambertian::*; // for testing
 use material::Material;
 use ray::*;
 use std::option::Option;

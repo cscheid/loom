@@ -1,12 +1,12 @@
 use background::*;
 use camera::*;
-use dielectric::*;
+use material::dielectric::*;
 use hitable::*;
 use hitable_list::*;
-use lambertian::*;
+use material::lambertian::*;
 use material::*;
-use metal::*;
-use mixture::*;
+use material::metal::*;
+use material::mixture::*;
 use rectangle::*;
 use scene::*;
 use serde_json::*;
