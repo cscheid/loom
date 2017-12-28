@@ -15,8 +15,8 @@ def render(proc_id):
     print("Rendering %s" % proc_id)
     subprocess.run(["./target/release/loom-render",
                     "-i", scene,
-                    "-s", samples,
                     "-h", height,
+                    "-s", samples,
                     "-t", interval,
                     "-p",
                     "-o", "%s-%s" % (out_file, proc_id)])
