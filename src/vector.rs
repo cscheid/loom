@@ -3,11 +3,14 @@ use tests::*;
 use rand;
 use rand::Rng;
 use rand::ThreadRng;
+use serde::*;
 
-#[derive(Debug, Copy, Clone)]
+#[derive(Serialize, PartialEq, Deserialize, Debug, Copy, Clone)]
 pub struct Vec3 {
     e: [f64; 3]
 }
+
+
 
 impl Vec3 {
     #[inline]

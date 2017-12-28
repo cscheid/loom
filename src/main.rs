@@ -1,7 +1,12 @@
 extern crate rand;
 extern crate getopts;
+
+#[macro_use]
+extern crate serde_derive;
+
 extern crate serde;
 extern crate serde_json;
+extern crate bincode;
 
 mod aabb;
 mod background;
@@ -105,6 +110,28 @@ fn write_image_to_file(image: &Vec<Vec<Vec3>>, samples_so_far: usize, subsample:
     }
 }
 
+#[derive(Serialize, Deserialize, PartialEq, Debug)]
+struct ImageSummaries {
+    w: usize,
+    h: usize,
+    s: usize,
+    data: Vec<Vec<Vec3>>
+}
+
+fn write_sample_summaries_to_file(image: &Vec<Vec<Vec3>>, ns: usize, name: &String)
+{
+    let mut f = BufWriter::new(File::create(format!("{}.bincode", name)).unwrap());
+    
+    let summary = ImageSummaries {
+        w: image[0].len(),
+        h: image.len(),
+        s: ns,
+        data: image.to_owned()
+    };
+
+    bincode::serialize_into(&mut f, &summary, bincode::Infinite);
+}
+    
 fn write_multiple_images_to_file(image: &Vec<Vec<Vec3>>, ns: usize, name: &String)
 {
     write_image_to_file(&image, ns, 1, &format!("{}-1", name));
@@ -155,17 +182,19 @@ fn write_image(args: &Args)
                 let v = ((j as f64) + rng.gen::<f64>()) / (ny as f64);
                 let r = camera.get_ray(u, v);
                 output_image[j][i] = output_image[j][i] + color(&r, &*bvh_world, &background, 0);
-                // output_image[j][i] = output_image[j][i] + color(&r, &world, &background, 0);
             }
         }
         match last_write.elapsed() {
             Ok(elapsed) => {
-                // write images every minute.
                 if elapsed.as_secs() >= interval || !wrote_anything {
                     wrote_anything = true;
                     last_write = SystemTime::now();
-                    let name = format!("{}-{:04}", output_name, s);
-                    write_multiple_images_to_file(&output_image, s, &name);
+                    if args.parallel {
+                        write_sample_summaries_to_file(&output_image, s, &output_name);
+                    } else {
+                        let name = format!("{}-{:04}", output_name, s);
+                        write_multiple_images_to_file(&output_image, s, &name);
+                    }
                 }
             },
             Err(_e) => {
@@ -190,7 +219,8 @@ struct Args {
 
     pub o: Option<String>,
     pub i: Option<String>,
-    pub t: Option<u64>
+    pub t: Option<u64>,
+    pub parallel: bool
 }
 
 fn main() {
@@ -210,6 +240,7 @@ fn main() {
     // opts.optopt("a", "aperture", "set aperture diameter", "NAME");
     // opts.optopt("d", "distance", "set focus distance", "NAME");
     opts.optflag("?", "help", "print this help menu");
+    opts.optflag("p", "parallel", "write out pixel statistics, suited for parallel processing");
 
     let matches = match opts.parse(&args[1..]) {
         Ok(m) => { m }
@@ -217,16 +248,13 @@ fn main() {
     };
 
     write_image(&(Args {
-        // f: matches.opt_str("f").and_then(|x| x.parse::<f64>().ok()),
-        // a: matches.opt_str("a").and_then(|x| x.parse::<f64>().ok()),
-        // d: matches.opt_str("d").and_then(|x| x.parse::<f64>().ok()),
-
         s: matches.opt_str("s").and_then(|x| x.parse::<usize>().ok()),
         w: matches.opt_str("w").and_then(|x| x.parse::<usize>().ok()),
         h: matches.opt_str("h").and_then(|x| x.parse::<usize>().ok()),
 
         t: matches.opt_str("t").and_then(|x| x.parse::<u64>().ok()),
         i: matches.opt_str("i"),
-        o: matches.opt_str("o")
+        o: matches.opt_str("o"),
+        parallel: matches.opt_present("p")
     }));
 }
