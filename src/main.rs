@@ -10,37 +10,32 @@ extern crate bincode;
 
 mod aabb;
 mod background;
-mod bvh;
 mod camera;
 mod deserialize;
 mod dielectric;
 mod hitable;
-mod hitable_list;
 mod lambertian;
 mod material;
 mod metal;
 mod mixture;
 mod random;
-mod rectangle;
 mod ray;
 mod scene;
 mod sampling;
-mod sphere;
-mod triangle_mesh;
 mod vector;
 mod tests;
 
 use background::*;
-use bvh::BVH;
 use camera::Camera;
 use deserialize::*;
-use hitable_list::*;
+use hitable::*;
+use hitable::bvh::BVH;
+use hitable::hitable_list::*;
 use metal::Metal;
 use rand::Rng;
 use ray::Ray;
 use scene::Scene;
 use vector::Vec3;
-use hitable::*;
 
 use getopts::Options;
 

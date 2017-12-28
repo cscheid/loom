@@ -1,3 +1,9 @@
+pub mod bvh;
+pub mod sphere;
+pub mod hitable_list;
+pub mod rectangle;
+pub mod triangle_mesh;
+
 use vector::Vec3;
 use ray::Ray;
 use material::Material;

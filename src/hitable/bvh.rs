@@ -1,7 +1,7 @@
 use aabb::AABB;
 use aabb;
 use hitable::*;
-use hitable_list::*;
+use hitable::hitable_list::*;
 use ray::Ray;
 
 use rand;

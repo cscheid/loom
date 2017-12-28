@@ -8,6 +8,8 @@ extern crate serde;
 extern crate serde_json;
 extern crate bincode;
 
+mod random;
+mod sampling;
 mod vector;
 mod tests;
 use vector::Vec3;
