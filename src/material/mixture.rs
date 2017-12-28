@@ -1,7 +1,7 @@
-use material::Material;
-use vector::Vec3;
-use ray::Ray;
+use geometry::ray::Ray;
+use geometry::vector::Vec3;
 use hitable::*;
+use material::Material;
 use random::*;
 
 use std::rc::Rc;

@@ -1,4 +1,4 @@
-use vector::Vec3;
+use geometry::vector::Vec3;
 
 #[derive(Debug, Copy, Clone)]
 pub struct Ray {

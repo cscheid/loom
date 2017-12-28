@@ -10,9 +10,10 @@ extern crate bincode;
 
 mod random;
 mod sampling;
-mod vector;
+mod geometry;
 mod tests;
-use vector::Vec3;
+
+use geometry::vector::Vec3;
 
 use getopts::Options;
 

@@ -1,8 +1,8 @@
-use aabb::AABB;
-use aabb;
+use geometry::aabb;
+use geometry::aabb::AABB;
+use geometry::ray::Ray;
 use hitable::*;
 use hitable::hitable_list::*;
-use ray::Ray;
 
 use rand;
 use rand::Rng;

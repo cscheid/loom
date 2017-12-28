@@ -12,7 +12,7 @@ use scene::*;
 use serde_json::*;
 use sphere::*;
 use triangle_mesh::*;
-use vector::*;
+use geometry::vector::*;
 
 use std::fs::File;
 use std::io::BufReader;

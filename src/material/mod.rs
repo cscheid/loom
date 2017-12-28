@@ -3,9 +3,10 @@ pub mod metal;
 pub mod dielectric;
 pub mod mixture;
 
-use ray::Ray;
-use vector::Vec3;
+use geometry::ray::Ray;
+use geometry::vector::Vec3;
 use hitable::HitRecord;
+
 use std::fmt;
 
 //////////////////////////////////////////////////////////////////////////////

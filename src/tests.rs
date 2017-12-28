@@ -2,7 +2,7 @@ use rand;
 use rand::Rng;
 use rand::ThreadRng;
 
-use vector::Vec3;
+use geometry::vector::Vec3;
 
 //////////////////////////////////////////////////////////////////////////////
 

@@ -4,11 +4,11 @@ pub mod hitable_list;
 pub mod rectangle;
 pub mod triangle_mesh;
 
-use vector::Vec3;
-use ray::Ray;
+use geometry::aabb::AABB;
+use geometry::ray::Ray;
+use geometry::vector::Vec3;
 use material::Material;
 use std::rc::Rc;
-use aabb::AABB;
 
 pub struct HitRecord {
     pub t: f64,

@@ -1,8 +1,9 @@
-use ray::Ray;
+use geometry::ray::Ray;
 use sampling;
 use std::f64::consts::PI;
-use vector::*;
-use vector::Vec3;
+use geometry::vector::*;
+
+//////////////////////////////////////////////////////////////////////////////
 
 #[derive(Clone, Copy, Debug)]
 pub struct Camera {
