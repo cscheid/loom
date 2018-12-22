@@ -13,13 +13,6 @@ out_file = sys.argv[6]
 
 def render(proc_id):
     print("Rendering %s" % proc_id)
-    print(" ".join(["./target/release/loom-render",
-                    "-i", scene,
-                    "-s", samples,
-                    "-h", height,
-                    "-t", interval,
-                    "-p",
-                    "-o", "%s-%s" % (out_file, proc_id)]))
     subprocess.run(["./target/release/loom-render",
                     "-i", scene,
                     "-s", samples,
