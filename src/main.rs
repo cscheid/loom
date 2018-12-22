@@ -8,28 +8,39 @@ extern crate serde;
 extern crate serde_json;
 extern crate bincode;
 
+mod aabb;
 mod background;
+mod bvh;
 mod camera;
 mod deserialize;
-mod geometry;
+mod dielectric;
 mod hitable;
+mod hitable_list;
+mod lambertian;
 mod material;
+mod metal;
+mod mixture;
 mod random;
+mod rectangle;
+mod ray;
 mod scene;
 mod sampling;
+mod sphere;
+mod triangle_mesh;
+mod vector;
 mod tests;
 
 use background::*;
+use bvh::BVH;
 use camera::Camera;
 use deserialize::*;
-use geometry::ray::Ray;
-use geometry::vector::Vec3;
-use geometry::vector;
-use hitable::*;
-use hitable::bvh::BVH;
-use hitable::hitable_list::*;
+use hitable_list::*;
+use metal::Metal;
 use rand::Rng;
+use ray::Ray;
 use scene::Scene;
+use vector::Vec3;
+use hitable::*;
 
 use getopts::Options;
 
@@ -206,6 +217,10 @@ struct Args {
     pub h: Option<usize>,
     pub s: Option<usize>,
 
+    // pub f: Option<f64>,
+    // pub a: Option<f64>,
+    // pub d: Option<f64>,
+
     pub o: Option<String>,
     pub i: Option<String>,
     pub t: Option<u64>,
@@ -225,19 +240,16 @@ fn main() {
     opts.optopt("w", "width", "set image width in pixels", "NAME");
     opts.optopt("h", "height", "set image height in pixels", "NAME");
     opts.optopt("s", "samples", "set number of samples per pixel", "NAME");
+    // opts.optopt("f", "fov", "set field of view in degrees", "NAME");
+    // opts.optopt("a", "aperture", "set aperture diameter", "NAME");
+    // opts.optopt("d", "distance", "set focus distance", "NAME");
     opts.optflag("?", "help", "print this help menu");
-    opts.optflag("p", "parallel", "write out pixel statistics instead of PPM image, suited for parallel processing");
+    opts.optflag("p", "parallel", "write out pixel statistics, suited for parallel processing");
 
     let matches = match opts.parse(&args[1..]) {
         Ok(m) => { m }
         Err(f) => { panic!(f.to_string()) }
     };
-
-    if matches.opt_present("?") {
-        let brief = format!("Usage: {} FILE [options]", args[0]);
-        eprintln!("{}", opts.usage(&brief));
-        std::process::exit(-1);
-    }
 
     write_image(&(Args {
         s: matches.opt_str("s").and_then(|x| x.parse::<usize>().ok()),

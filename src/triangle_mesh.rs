@@ -1,13 +1,13 @@
-use geometry::aabb::AABB;
-use geometry::aabb;
-use geometry::ray::*;
-use geometry::vector::*;
+use aabb::AABB;
+use aabb;
 use hitable::*;
+use lambertian::*; // for testing
 use material::Material;
-use material::lambertian::*; // for testing
+use ray::*;
 use std::option::Option;
 use std::rc::Rc;
 use tests::*;
+use vector::*;
 
 use rand;
 use rand::Rng;

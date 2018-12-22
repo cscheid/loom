@@ -8,12 +8,9 @@ extern crate serde;
 extern crate serde_json;
 extern crate bincode;
 
-mod random;
-mod sampling;
-mod geometry;
+mod vector;
 mod tests;
-
-use geometry::vector::Vec3;
+use vector::Vec3;
 
 use getopts::Options;
 

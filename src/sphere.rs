@@ -1,10 +1,10 @@
-use geometry::aabb::AABB;
-use geometry::ray::Ray;
-use geometry::vector::Vec3;
-use geometry::vector;
+use aabb::AABB;
 use hitable::*;
 use material::*;
+use ray::Ray;
 use std::rc::Rc;
+use vector::Vec3;
+use vector;
 
 #[derive(Debug)]
 pub struct Sphere {

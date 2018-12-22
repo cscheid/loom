@@ -1,7 +1,7 @@
 use material::Material;
-use geometry::vector::Vec3;
-use geometry::vector;
-use geometry::ray::Ray;
+use vector::Vec3;
+use vector;
+use ray::Ray;
 use hitable::*;
 use random::*;
 

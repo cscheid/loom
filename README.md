@@ -3,14 +3,22 @@
 Seriously, just go buy these books right now, they're U$3.00 each and
 worth 10x as much, easily.
 
-I AM IN THE MIDDLE OF WRITING A SCENE FILE FORMAT.
+# Compiling
 
-### FIXMEs
+This should work:
 
-- my serialization system seems pretty bad, but I don't want to learn
-  serde very deeply right now.
+	cargo build --release
+	
+# Usage
 
-- I need a consistency pass on Vec3 vs &Vec3 parameters.
+Minimal example: (you'll need python3 and
+[`click`](https://pymbook.readthedocs.io/en/latest/click.html)
+available in your environment)
+
+    ./scripts/run.py --scene tests/s1.json --output out.png
+
+Get more options with `./scripts/run.py --help`
+
 
 
   

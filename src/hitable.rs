@@ -1,14 +1,8 @@
-pub mod bvh;
-pub mod sphere;
-pub mod hitable_list;
-pub mod rectangle;
-pub mod triangle_mesh;
-
-use geometry::aabb::AABB;
-use geometry::ray::Ray;
-use geometry::vector::Vec3;
+use vector::Vec3;
+use ray::Ray;
 use material::Material;
 use std::rc::Rc;
+use aabb::AABB;
 
 pub struct HitRecord {
     pub t: f64,

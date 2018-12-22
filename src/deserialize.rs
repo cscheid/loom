@@ -1,18 +1,18 @@
 use background::*;
 use camera::*;
-use material::dielectric::*;
+use dielectric::*;
 use hitable::*;
 use hitable_list::*;
-use material::lambertian::*;
+use lambertian::*;
 use material::*;
-use material::metal::*;
-use material::mixture::*;
+use metal::*;
+use mixture::*;
 use rectangle::*;
 use scene::*;
 use serde_json::*;
 use sphere::*;
 use triangle_mesh::*;
-use geometry::vector::*;
+use vector::*;
 
 use std::fs::File;
 use std::io::BufReader;

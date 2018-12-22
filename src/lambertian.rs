@@ -1,8 +1,8 @@
-use geometry::ray::Ray;
-use geometry::vector::Vec3;
-use hitable::*;
 use material::Material;
+use vector::Vec3;
 use sampling;
+use ray::Ray;
+use hitable::*;
 
 use std::rc::Rc;
 use std::fmt;

@@ -1,11 +1,11 @@
-use geometry::aabb::AABB;
-use geometry::aabb;
-use geometry::ray::Ray;
-use geometry::vector::Vec3;
-use geometry::vector;
+use aabb::AABB;
+use aabb;
 use hitable::*;
 use material::*;
+use ray::Ray;
 use std::rc::Rc;
+use vector::Vec3;
+use vector;
     
 // for tests
 // use tests::*;

@@ -1,5 +1,5 @@
-use geometry::vector::*;
-use geometry::ray::*;
+use vector::*;
+use ray::*;
 
 #[derive(Copy, Debug, Clone)]
 pub struct AABB {

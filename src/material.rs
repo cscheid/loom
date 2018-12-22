@@ -1,12 +1,6 @@
-pub mod lambertian;
-pub mod metal;
-pub mod dielectric;
-pub mod mixture;
-
-use geometry::ray::Ray;
-use geometry::vector::Vec3;
+use ray::Ray;
+use vector::Vec3;
 use hitable::HitRecord;
-
 use std::fmt;
 
 //////////////////////////////////////////////////////////////////////////////

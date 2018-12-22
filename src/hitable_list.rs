@@ -1,9 +1,9 @@
-use geometry::aabb::AABB;
-use geometry::aabb;
-use geometry::ray::Ray;
+use aabb;
+use aabb::AABB;
 use hitable::*;
-use std::option::Option;
+use ray::Ray;
 use std::rc::Rc;
+use std::option::Option;
 
 pub struct HitableList {
     pub v: Vec<Box<Hitable>>,

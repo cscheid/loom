@@ -1,6 +1,4 @@
-use geometry::vector::*;
-
-//////////////////////////////////////////////////////////////////////////////
+use vector::*;
 
 pub trait Background {
     fn get_background(&self, unit_direction: &Vec3) -> Vec3;
