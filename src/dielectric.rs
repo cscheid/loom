@@ -1,4 +1,4 @@
-use material::Material;
+use material::*;
 use vector::Vec3;
 use vector;
 use ray::Ray;
@@ -21,15 +21,14 @@ fn schlick(cosine: f64, ref_idx: f64) -> f64 {
 }
 
 impl Material for Dielectric {
-    fn scatter(&self, r_in: &Ray, rec: &HitRecord,
-               attenuation: &mut Vec3, scattered: &mut Ray) -> bool {
+    fn scatter(&self, r_in: &Ray, rec: &HitRecord) -> Scatter {
         let dot = r_in.direction().dot(&rec.normal);
         let reflected = vector::reflect(&r_in.direction(), &rec.normal);
         let outward_normal;
         let ni_over_nt;
         let cosine;
         
-        attenuation.set(&Vec3::new(1.0, 1.0, 1.0));
+        let w = Vec3::new(1.0, 1.0, 1.0);
         if dot > 0.0 {
             outward_normal = -rec.normal;
             ni_over_nt = self.refraction_index;
@@ -43,16 +42,15 @@ impl Material for Dielectric {
             Some(refracted) => {
                 let reflected_prob = schlick(cosine, self.refraction_index); 
                 if rand_double() < reflected_prob {
-                    scattered.set(&rec.p, &reflected);
+                    Scatter::Bounce(w, Ray::new(rec.p, reflected))
                 } else {
-                    scattered.set(&rec.p, &refracted);
+                    Scatter::Bounce(w, Ray::new(rec.p, refracted))
                 }
             },
             None => {
-                    scattered.set(&rec.p, &reflected);
+                Scatter::Bounce(w, Ray::new(rec.p, reflected))
             }
         }
-        true
     }
     
     fn debug(&self, f: &mut fmt::Formatter) -> fmt::Result {

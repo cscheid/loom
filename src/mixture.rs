@@ -1,4 +1,4 @@
-use material::Material;
+use material::*;
 use vector::Vec3;
 use ray::Ray;
 use hitable::*;
@@ -18,12 +18,11 @@ pub struct Mixture {
 }
 
 impl Material for Mixture {
-    fn scatter(&self, ray_in: &Ray, rec: &HitRecord,
-               attenuation: &mut Vec3, scattered: &mut Ray) -> bool {
+    fn scatter(&self, ray_in: &Ray, rec: &HitRecord) -> Scatter {
         if rand_double() > self.u {
-            self.mat_1.scatter(ray_in, rec, attenuation, scattered)
+            self.mat_1.scatter(ray_in, rec)
         } else {
-            self.mat_2.scatter(ray_in, rec, attenuation, scattered)
+            self.mat_2.scatter(ray_in, rec)
         }
     }
 

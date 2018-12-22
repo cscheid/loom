@@ -1,4 +1,5 @@
 from camera import *
+from emitter import *
 from rectangle import *
 from lambertian import *
 from triangle_mesh import *

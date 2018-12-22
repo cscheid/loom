@@ -1,4 +1,4 @@
-use material::Material;
+use material::*;
 use vector::Vec3;
 use vector;
 use ray::Ray;
@@ -14,12 +14,14 @@ pub struct Metal {
 }
 
 impl Material for Metal {
-    fn scatter(&self, ray_in: &Ray, rec: &HitRecord,
-               attenuation: &mut Vec3, scattered: &mut Ray) -> bool {
+    fn scatter(&self, ray_in: &Ray, rec: &HitRecord) -> Scatter {
         let reflected = vector::reflect(&vector::unit_vector(&ray_in.direction()), &rec.normal);
-        scattered.set(&rec.p, &reflected);
-        attenuation.set(&self.albedo);
-        scattered.direction().dot(&rec.normal) > 0.0
+        let scattered = Ray::new(rec.p, reflected);
+        if scattered.direction().dot(&rec.normal) > 0.0 {
+            Scatter::Bounce(self.albedo, scattered)
+        } else {
+            Scatter::Absorb
+        }
     }
 
     fn debug(&self, f: &mut fmt::Formatter) -> fmt::Result {

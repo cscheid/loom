@@ -43,8 +43,10 @@ scene.add_object(triangle_mesh(
     file_name=path + "/cornellbox-shortbox.json",
     material=lambertian([0.725, 0.71, 0.68])))
 
-# scene.add_object(triangle_mesh(
-#     file_name=path + "/cornellbox-light.json",
-#     material=lambertian([0.14, 0.45, 0.091])))
+scene.add_object(triangle_mesh(
+    file_name=path + "/cornellbox-light.json",
+    material=emitter([0.725 * 17,
+                      0.71 * 14,
+                      0.68 * 4])))
 
 scene.write()

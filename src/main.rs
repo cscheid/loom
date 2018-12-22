@@ -14,6 +14,7 @@ mod bvh;
 mod camera;
 mod deserialize;
 mod dielectric;
+mod emitter;
 mod hitable;
 mod hitable_list;
 mod lambertian;
@@ -41,7 +42,6 @@ use ray::Ray;
 use scene::Scene;
 use vector::Vec3;
 use hitable::*;
-
 use getopts::Options;
 
 use std::cmp;
@@ -64,16 +64,19 @@ fn color(ray: &Ray, world: &Hitable,
     let mut r = HitRecord::new();
 
     if world.hit(ray, 0.00001, 1e20, &mut r) {
-        let mut scattered = Ray::zero();
-        let mut attenuation = Vec3::zero();
-        if depth < 50 &&
-            r.material
-            .as_ref()
-            .expect("right here, yes")
-            .scatter(ray, &r, &mut attenuation, &mut scattered) {
-            attenuation * color(&scattered, world, background, depth+1)
-        } else {
+        if depth >= 50 {
             Vec3::new(0.0, 0.0, 0.0)
+        } else {
+            match r.material
+                .as_ref()
+                .expect("right here, yes")
+                .scatter(ray, &r) {
+                    material::Scatter::Bounce(attenuation, scattered) => {
+                        attenuation * color(&scattered, world, background, depth+1)
+                    },
+                    material::Scatter::Emit(emission) => emission,
+                    material::Scatter::Absorb => Vec3::new(0.0, 0.0, 0.0)
+                }
         }
     } else {
         let unit_direction = vector::unit_vector(&ray.direction());
@@ -102,9 +105,9 @@ fn write_image_to_file(image: &Vec<Vec<Vec3>>, samples_so_far: usize, subsample:
             }
             let mut out_col = super_pixel / (ns * (w as f64) * (h as f64));
             out_col = Vec3::new(out_col[0].sqrt(), out_col[1].sqrt(), out_col[2].sqrt());
-            let ir = (255.99 * out_col[0]) as i32;
-            let ig = (255.99 * out_col[1]) as i32;
-            let ib = (255.99 * out_col[2]) as i32;
+            let ir = cmp::min((255.99 * out_col[0]) as i32, 255);
+            let ig = cmp::min((255.99 * out_col[1]) as i32, 255);
+            let ib = cmp::min((255.99 * out_col[2]) as i32, 255);
             f.write_fmt(format_args!("{} {} {}\n", ir, ig, ib)).unwrap();
         }
     }

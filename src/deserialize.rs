@@ -1,6 +1,7 @@
 use background::*;
 use camera::*;
 use dielectric::*;
+use emitter::*;
 use hitable::*;
 use hitable_list::*;
 use lambertian::*;
@@ -80,6 +81,17 @@ pub fn deserialize_dielectric(v: &Value) -> Option<Rc<Material>>
             m["refraction_index"]
                 .as_f64()
                 .map(|ri| Dielectric::new(ri))
+        },
+        _ => None
+    }
+}
+
+pub fn deserialize_emitter(v: &Value) -> Option<Rc<Material>>
+{
+    match v {
+        &Value::Object(ref m) => {
+            deserialize_vec3(&m["emission"])
+                .map(|a| Emitter::new(&a))
         },
         _ => None
     }
@@ -315,6 +327,8 @@ pub fn deserialize_material(v: &Value) -> Option<Rc<Material>>
                 let name = class.unwrap();
                 if name == "dielectric" {
                     deserialize_dielectric(object)
+                } else if name == "emitter" {
+                    deserialize_emitter(object)
                 } else if name == "lambertian" {
                     deserialize_lambertian(object)
                 } else if name == "metal" {

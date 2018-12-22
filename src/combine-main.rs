@@ -46,9 +46,9 @@ fn write_image_to_file(image: &Vec<Vec<Vec3>>, samples_so_far: usize, subsample:
             }
             let mut out_col = super_pixel / (ns * (w as f64) * (h as f64));
             out_col = Vec3::new(out_col[0].sqrt(), out_col[1].sqrt(), out_col[2].sqrt());
-            let ir = (255.99 * out_col[0]) as i32;
-            let ig = (255.99 * out_col[1]) as i32;
-            let ib = (255.99 * out_col[2]) as i32;
+            let ir = cmp::min((255.99 * out_col[0]) as i32, 255);
+            let ig = cmp::min((255.99 * out_col[1]) as i32, 255);
+            let ib = cmp::min((255.99 * out_col[2]) as i32, 255);
             f.write_fmt(format_args!("{} {} {}\n", ir, ig, ib)).unwrap();
         }
     }

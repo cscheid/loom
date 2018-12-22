@@ -4,11 +4,15 @@ use hitable::HitRecord;
 use std::fmt;
 
 //////////////////////////////////////////////////////////////////////////////
-    
-pub trait Material {
-    fn scatter(&self, ray: &Ray, hit_record: &HitRecord,
-               attenuation: &mut Vec3, scattered: &mut Ray) -> bool;
 
+pub enum Scatter {
+    Bounce(Vec3, Ray),
+    Emit(Vec3),
+    Absorb
+}
+
+pub trait Material {
+    fn scatter(&self, ray: &Ray, hit_record: &HitRecord) -> Scatter;
     fn debug(&self, f: &mut fmt::Formatter) -> fmt::Result;
 }
 

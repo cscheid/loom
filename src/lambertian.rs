@@ -1,4 +1,4 @@
-use material::Material;
+use material::*;
 use vector::Vec3;
 use sampling;
 use ray::Ray;
@@ -15,17 +15,14 @@ pub struct Lambertian {
 
 // two-sided lambertian
 impl Material for Lambertian {
-    fn scatter(&self, _ray: &Ray, rec: &HitRecord,
-               attenuation: &mut Vec3, scattered: &mut Ray) -> bool {
+    fn scatter(&self, _ray: &Ray, rec: &HitRecord) -> Scatter {
         let target;
         if rec.normal.dot(&_ray.direction()) > 0.0 {
             target = rec.p - rec.normal + sampling::random_in_unit_sphere();
         } else {
             target = rec.p + rec.normal + sampling::random_in_unit_sphere();
         }
-        scattered.set(&rec.p, &(target - rec.p));
-        attenuation.set(&self.albedo);
-        true
+        Scatter::Bounce(self.albedo, Ray::new(rec.p, target - rec.p))
     }
 
     fn debug(&self, f: &mut fmt::Formatter) -> fmt::Result {
