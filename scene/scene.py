@@ -1,3 +1,4 @@
+from background import *
 from camera import *
 from emitter import *
 from rectangle import *

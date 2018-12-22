@@ -3,7 +3,7 @@
 from scene import *
 
 scene = Scene()
-scene.background = "overhead_light"
+scene.background = constant([0,0,0]) # "overhead_light"
 scene.camera = camera(
     look_from  = [0.0,   1,   5.0],
     look_at    = [0.0,   1,  -1.0],
