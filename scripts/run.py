@@ -44,7 +44,7 @@ def run(scene, output, samples, processes, height, partial):
         print("Running parallel driver..")
         subprocess.run(['./scripts/parallel_driver.py',
                         str(n_procs),
-                        './tests/s1.json',
+                        scene,
                         str(image_height),
                         str(samples_per_pixel),
                         str(interval),

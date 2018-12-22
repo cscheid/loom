@@ -13,22 +13,24 @@ indices = []
 
 for l in f:
     l = l.strip().split()
-    if l[0] == '#':
+    if l == []:
+        continue
+    elif l[0][0] == '#':
         continue
     elif l[0] == 'v':
         verts.append(list(float(i) for i in l[1:]))
     elif l[0] == 'f':
         ixs = list(int(i) for i in l[1:])
-        fixed_ixs = []
-        if len(ixs) != 3:
-            sys.stderr.write("Only triangles supported.\n")
-            sys.exit(1)
-        for i in ixs:
+        def add(i):
             if i > 0:
-                fixed_ixs.append(i-1) # one-index? idiots.
+                indices.append(i-1) # one-index? idiots.
             elif i < 0:
-                fixed_ixs.append(len(verts)+i)
-        indices.extend(fixed_ixs)
+                indices.append(len(verts)+i)
+        # fans out non-triangles
+        for t in range(1, len(ixs)-1):
+            add(ixs[0])
+            add(ixs[t])
+            add(ixs[t+1])
     else:
         sys.stderr.write("%s elements are not supported.\n" % l[0])
 
