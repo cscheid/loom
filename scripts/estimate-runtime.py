@@ -28,7 +28,8 @@ def regress(runtimes, spp, height, processes):
 @click.option('--height', help='Image height in pixels in full render.')
 @click.option('--samples', help='Samples per pixel in full render.')
 @click.option('--processes', help='Number of processes in full render.')
-def run(scene, height, samples, processes):
+@click.option('--output', default=None, help='Unused option to match interface of run.py.')
+def run(scene, height, samples, processes, output):
     """Estimates runtime of full render by running a tiny noisy version."""
     if scene is None:
         print("Expected a --scene option")
