@@ -4,6 +4,7 @@ import subprocess
 import sys
 import tempfile
 import click
+import time
 
 # n_procs = 4
 # scene_file = sys.argv[1]
@@ -32,14 +33,17 @@ def run(scene, output, samples, processes, height, partial):
     n_procs = processes
     scene_file = scene
     output_image = output
-    samples_per_pixel = samples
+    samples_per_pixel = int(samples / n_procs)
+    print("Starting loom's parallel driver.")
+    print("  per-process spp: %d" % samples_per_pixel)
+    print("  overall spp: %d" % (samples_per_pixel * n_procs))
     image_height = height
     interval = partial
     if interval == -1:
         interval = samples_per_pixel
-    print(scene)
-    print(output)
-    print(samples)
+    print("  scene file:", scene)
+    print("  output file:", output)
+    start = time.time()
     with tempfile.TemporaryDirectory() as td:
         print("Running parallel driver..")
         subprocess.run(['./scripts/parallel_driver.py',
@@ -58,6 +62,7 @@ def run(scene, output, samples, processes, height, partial):
         subprocess.run(cmd)
         print("Converting to PNG.")
         subprocess.run(["convert", ppm_out + ".ppm", output_image])
-    
+    elapsed = time.time() - start
+    print("Done. Total runtime: %.3fs" % elapsed)
 if __name__ == '__main__':
     run()
