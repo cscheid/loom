@@ -68,7 +68,8 @@ def run(scene, height, samples, processes, output, linear):
                             str(int(size)),
                             "1",
                             "1",
-                            td + '/out'], stdout=subprocess.DEVNULL)
+                            td + '/out'])
+                            # td + '/out'], stdout=subprocess.DEVNULL)
             elapsed = time.time() - start
             runtimes.append((npixels, elapsed))
             i += 1

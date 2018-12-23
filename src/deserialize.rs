@@ -138,7 +138,7 @@ pub fn deserialize_mixture(v: &Value) -> Option<Box<Material>>
     }
 }
 
-pub fn deserialize_sphere(v: &Value) -> Option<Box<Hitable>>
+pub fn deserialize_sphere(v: &Value) -> Option<Box<Hitable + Send + Sync>>
 {
     match v {
         &Value::Object(ref m) => {
@@ -158,7 +158,7 @@ pub fn deserialize_sphere(v: &Value) -> Option<Box<Hitable>>
     }
 }
 
-pub fn deserialize_rectangle(v: &Value) -> Option<Box<Hitable>>
+pub fn deserialize_rectangle(v: &Value) -> Option<Box<Hitable + Send + Sync>>
 {
     match v {
         &Value::Object(ref m) => {
@@ -221,7 +221,7 @@ pub fn deserialize_triangle_mesh_data(v: &Value) ->
     }
 }
 
-pub fn deserialize_triangle_mesh(v: &Value) -> Option<Box<Hitable>>
+pub fn deserialize_triangle_mesh(v: &Value) -> Option<Box<Hitable + Send + Sync>>
 {
     match v {
         &Value::Object(ref m) => {
@@ -249,7 +249,7 @@ pub fn deserialize_triangle_mesh(v: &Value) -> Option<Box<Hitable>>
     }
 }
 
-pub fn deserialize_hitable_list(v: &Value) -> Option<Box<Hitable>>
+pub fn deserialize_hitable_list(v: &Value) -> Option<Box<Hitable + Send + Sync>>
 {
     match v {
         &Value::Array(ref m) => {
@@ -269,7 +269,7 @@ pub fn deserialize_hitable_list(v: &Value) -> Option<Box<Hitable>>
 
 //////////////////////////////////////////////////////////////////////////////
 
-pub fn deserialize_background(v: &Value) -> Option<Box<Background>>
+pub fn deserialize_background(v: &Value) -> Option<Box<Background + Send + Sync>>
 {
     match v {
         &Value::Object(ref m) => {
@@ -299,7 +299,7 @@ pub fn deserialize_background(v: &Value) -> Option<Box<Background>>
     }
 }
 
-pub fn deserialize_constant_background(v: &Value) -> Option<Box<Background>>
+pub fn deserialize_constant_background(v: &Value) -> Option<Box<Background + Send + Sync>>
 {
     match v {
         &Value::Object(ref m) => {
@@ -343,7 +343,7 @@ pub fn deserialize_material(v: &Value) -> Option<Box<Material>>
     }
 }
 
-pub fn deserialize_hitable(v: &Value) -> Option<Box<Hitable>>
+pub fn deserialize_hitable(v: &Value) -> Option<Box<Hitable + Send + Sync>>
 {
     match v {
         &Value::Object(ref m) => {
@@ -370,7 +370,7 @@ pub fn deserialize_hitable(v: &Value) -> Option<Box<Hitable>>
     }
 }
 
-pub fn deserialize_scene_object_list(v: &Value) -> Option<Vec<Box<Hitable>>>
+pub fn deserialize_scene_object_list(v: &Value) -> Option<Vec<Box<Hitable + Send + Sync>>>
 {
     match v {
         &Value::Array(ref m) => {

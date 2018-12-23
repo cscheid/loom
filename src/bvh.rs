@@ -55,7 +55,7 @@ impl Hitable for BVH {
 const MIN_LENGTH: usize = 32;
 
 impl BVH {
-    pub fn build(mut objs: Vec<Box<Hitable>>) -> Box<Hitable> {
+    pub fn build(mut objs: Vec<Box<Hitable + Send + Sync>>) -> Box<Hitable + Send + Sync> {
         if objs.len() == 0 {
             panic!("Need nonempty objs!");
         } else if objs.len() <= MIN_LENGTH {

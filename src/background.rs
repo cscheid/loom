@@ -1,6 +1,6 @@
 use vector::*;
 
-pub trait Background {
+pub trait Background : Send + Sync {
     fn get_background(&self, unit_direction: &Vec3) -> Vec3;
 }
 

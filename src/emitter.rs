@@ -14,7 +14,7 @@ pub struct Emitter {
 
 // isotropic emitter
 impl Material for Emitter {
-    fn scatter(&self, _ray: &Ray, rec: &HitRecord) -> Scatter
+    fn scatter(&self, _ray: &Ray, _rec: &HitRecord) -> Scatter
     {
         Scatter::Emit(self.emission)
     }

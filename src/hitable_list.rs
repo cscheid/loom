@@ -5,12 +5,12 @@ use ray::Ray;
 use std::option::Option;
 
 pub struct HitableList {
-    pub v: Vec<Box<Hitable>>,
+    pub v: Vec<Box<Hitable + Send + Sync>>,
     pub bbox: Option<AABB>
 }
 
 impl HitableList {
-    pub fn new(v: Vec<Box<Hitable>>) -> HitableList {
+    pub fn new(v: Vec<Box<Hitable + Send + Sync>>) -> HitableList {
         let bbox = bounding_box_internal(&v);
         HitableList {
             v: v,
@@ -19,7 +19,7 @@ impl HitableList {
     }
 }
 
-fn bounding_box_internal(v: &Vec<Box<Hitable>>) -> Option<AABB> {
+fn bounding_box_internal(v: &Vec<Box<Hitable + Send + Sync>>) -> Option<AABB> {
     let mut result = AABB::zero();
     for h in v.iter() {
         let bb_maybe = h.bounding_box();

@@ -21,7 +21,7 @@ impl<'a> HitRecord<'a> {
     }
 }
 
-pub trait Hitable {
+pub trait Hitable : Send + Sync {
     fn hit<'a>(&'a self, r: &Ray, t_min: f64, t_max: f64) -> Option<HitRecord<'a>>;
     fn bounding_box(&self) -> Option<AABB>;
 }

@@ -11,7 +11,7 @@ pub enum Scatter {
     Absorb
 }
 
-pub trait Material {
+pub trait Material: Send + Sync {
     fn scatter(&self, ray: &Ray, hit_record: &HitRecord) -> Scatter;
     fn debug(&self, f: &mut fmt::Formatter) -> fmt::Result;
 }
