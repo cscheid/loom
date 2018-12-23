@@ -192,6 +192,14 @@ pub fn refract(v: &Vec3, n: &Vec3, ni_over_nt: f64) -> Option<Vec3> {
 }
 
 //////////////////////////////////////////////////////////////////////////////
+// interpreting vec3 as rgb color
+
+pub fn luminance(v: &Vec3) -> f64 {
+    // https://en.wikipedia.org/wiki/Relative_luminance
+    return dot(v, &Vec3::new(0.2126, 0.7152, 0.0722));
+}
+
+//////////////////////////////////////////////////////////////////////////////
 
 #[test]
 fn it_works() {
