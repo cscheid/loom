@@ -10,8 +10,6 @@ pub struct Vec3 {
     e: [f64; 3]
 }
 
-
-
 impl Vec3 {
     #[inline]
     pub fn new(x: f64, y: f64, z: f64) -> Vec3 {
