@@ -25,3 +25,7 @@ path = "src/combine-main.rs"
 name = "loom-render"
 path = "src/main.rs"
 
+[[bin]]
+name = "loom-combine-linear"
+path = "src/combine-linear.rs"
+

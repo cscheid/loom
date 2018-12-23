@@ -16,12 +16,12 @@ import time
 @click.command()
 @click.option('--scene', help='Scene file.')
 @click.option('--output', help='Output image.')
+@click.option('--linear/--no-linear', default=False, help='if set, write linear image to be tone-mapped later.')
 @click.option('--samples', default=1, help='Samples per pixel.')
 @click.option('--processes', default=4, help='Processes to run.')
 @click.option('--height', default=480, help='Image height in pixels.')
 @click.option('--partial', default=-1, help='Produce partial output every this many samples.')
-
-def run(scene, output, samples, processes, height, partial):
+def run(scene, output, linear, samples, processes, height, partial):
     """Simple parallel runner for loom."""
     if scene is None:
         print("Expected a scene option")
@@ -54,14 +54,21 @@ def run(scene, output, samples, processes, height, partial):
                         str(interval),
                         td + '/out'])
         print("Combining summaries into output image")
-        cmd = ["./target/release/loom-combine"]
+        if linear:
+            cmd = ["./target/release/loom-combine-linear"]
+        else:
+            cmd = ["./target/release/loom-combine"]
         ppm_out = td + '/out'
         cmd.append(ppm_out) # output_image)
         for i in range(n_procs):
             cmd.append(td + ('/out-%d.bincode' % i))
         subprocess.run(cmd)
-        print("Converting to PNG.")
-        subprocess.run(["convert", ppm_out + ".ppm", output_image])
+        if linear:
+            print("Copying linear_rgb file...")
+            subprocess.run(["cp", ppm_out + ".linear_rgb", output_image])
+        else:
+            print("Converting to PNG.")
+            subprocess.run(["convert", ppm_out + ".ppm", output_image])
     elapsed = time.time() - start
     print("Done. Total runtime: %.3fs" % elapsed)
 if __name__ == '__main__':

@@ -29,7 +29,8 @@ def regress(runtimes, spp, height, processes):
 @click.option('--samples', help='Samples per pixel in full render.')
 @click.option('--processes', help='Number of processes in full render.')
 @click.option('--output', default=None, help='Unused option to match interface of run.py.')
-def run(scene, height, samples, processes, output):
+@click.option('--linear/--no-linear', default=False, help='Unused option to match interface of run.py.')
+def run(scene, height, samples, processes, output, linear):
     """Estimates runtime of full render by running a tiny noisy version."""
     if scene is None:
         print("Expected a --scene option")
