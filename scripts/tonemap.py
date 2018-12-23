@@ -21,32 +21,36 @@ def luminance(array):
            array[:,:,1] * 0.7152 + \
            array[:,:,2] * 0.0722
 
-l_w = luminance(image_array)
+def log_average_luminance(array):
+    n = array.shape[0] * array.shape[1]
+    return math.exp(scipy.log(l_w).sum() / n)
 
+##############################################################################
+
+l_w = luminance(image_array) + 0.001
 try:
     l_white = float(sys.argv[2])
+    if l_white == -1:
+        l_white = l_w.max()
 except:
     l_white = l_w.max()
-
-print("l_white: %.3f" % l_white)
 
 try:
     a = float(sys.argv[3])
 except IndexError:
     a = 0.18
-print("a: %.3f" % a)
 
-def log_average_luminance(array):
-    n = array.shape[0] * array.shape[1]
-    return math.exp(scipy.log(luminance(image_array) + 0.01).sum() / n)
+##############################################################################
 
 l_wbar = log_average_luminance(image_array)
-
 l = (a / l_wbar) * l_w
 l_d = l * (1 + (l / (l_white * l_white))) / (1 + l)
 lum_scale = l_d / l_w
-
 image_array = image_array * lum_scale[:,:,scipy.newaxis]
+
+print("l_white: %.3f" % l_white)
+print("a: %.3f" % a)
+print("scene's log-average luminance: %.3f" % l_wbar)
 
 ##############################################################################
 
