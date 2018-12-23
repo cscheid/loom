@@ -4,7 +4,6 @@ use sampling;
 use ray::Ray;
 use hitable::*;
 
-use std::rc::Rc;
 use std::fmt;
 use std::fmt::Debug;
 
@@ -26,8 +25,8 @@ impl Material for Emitter {
 }
 
 impl Emitter {
-    pub fn new(emission: &Vec3) -> Rc<Material> {
-        Rc::new(Emitter {
+    pub fn new(emission: &Vec3) -> Box<Material> {
+        Box::new(Emitter {
             emission: *emission
         })
     }

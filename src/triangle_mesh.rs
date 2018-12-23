@@ -5,7 +5,6 @@ use lambertian::*; // for testing
 use material::Material;
 use ray::*;
 use std::option::Option;
-use std::rc::Rc;
 use tests::*;
 use vector::*;
 
@@ -42,7 +41,7 @@ struct MeshBVH {
 pub struct TriangleMesh {
     pub vertices: Vec<Vec3>,
     pub triangles: Vec<Triangle>,
-    pub material: Rc<Material>,
+    pub material: Box<Material>,
     bvh: Box<MeshBVH>
 }
 
@@ -92,8 +91,8 @@ fn build_mesh_bvh(tris: &mut Vec<Triangle>, min_ix: usize, max_ix: usize) -> Opt
     }
 }
 
-impl TriangleMesh {
-    pub fn new(mat: Rc<Material>,
+impl<'a> TriangleMesh {
+    pub fn new(mat: Box<Material>,
                verts: Vec<Vec3>,
                indices: Vec<usize>) -> TriangleMesh {
         let mut tris = Vec::new();
@@ -115,8 +114,8 @@ impl TriangleMesh {
         }
     }
 
-    fn hit_bvh(&self, current_node: &Box<MeshBVH>,
-               r: &Ray, t_min: f64, t_max: f64, rec: &mut HitRecord) -> bool {
+    fn hit_bvh(&'a self, current_node: &Box<MeshBVH>,
+               r: &Ray, t_min: f64, t_max: f64) -> Option<HitRecord<'a>> {
         if current_node.bbox.hit(r, t_min, t_max) {
             match &current_node.left {
                 &None => {
@@ -138,46 +137,43 @@ impl TriangleMesh {
                         }
                     }
                     match result {
-                        None => false,
+                        None => None,
                         Some((hit_t, i)) => {
                             let tri = &self.triangles[i];
                             let n = unit_vector(&cross(
                                 &(tri.vertices[1] - tri.vertices[0]),
                                 &(tri.vertices[2] - tri.vertices[0])));
-                            rec.t = hit_t;
-                            rec.p = r.point_at_parameter(rec.t);
-                            rec.normal = n;
-                            rec.material = Some(Rc::clone(&self.material));
-                            true
+                            Some(HitRecord::hit(hit_t,
+                                                r.point_at_parameter(hit_t),
+                                                n,
+                                                &*self.material))
                         }
                     }
                 },
                 &Some(ref left_node) => {
-                    let mut left_rec = HitRecord::new();
-                    let mut right_rec = HitRecord::new();
                     let right_node = &current_node.right.as_ref().unwrap();
-                    let hit_left  =  self.hit_bvh(left_node,  r, t_min, t_max, &mut left_rec);
-                    let hit_right =  self.hit_bvh(right_node, r, t_min, t_max, &mut right_rec);
-                    if hit_left && hit_right {
-                        if left_rec.t < right_rec.t {
-                            rec.set(&left_rec);
-                        } else {
-                            rec.set(&right_rec);
+                    let hit_left  =  self.hit_bvh(left_node,  r, t_min, t_max);
+                    let hit_right =  self.hit_bvh(right_node, r, t_min, t_max);
+                    match (hit_left, hit_right) {
+                        (None, None) => None,
+                        (None, right_rec) => {
+                            right_rec
+                        },
+                        (left_rec, None) => {
+                            left_rec
+                        },
+                        (Some(left_rec), Some(right_rec)) => {
+                            if left_rec.t < right_rec.t {
+                                Some(left_rec)
+                            } else {
+                                Some(right_rec)
+                            }
                         }
-                        true
-                    } else if hit_left {
-                        rec.set(&left_rec);
-                        true
-                    } else if hit_right {
-                        rec.set(&right_rec);
-                        true
-                    } else {
-                        false
                     }
                 }
             }
         } else {
-            false
+            None
         }
     }
 }
@@ -224,8 +220,8 @@ impl Hitable for TriangleMesh {
         Some(self.bvh.bbox)
     }
    
-    fn hit(&self, r: &Ray, t_min: f64, t_max: f64, rec: &mut HitRecord) -> bool {
-        self.hit_bvh(&self.bvh, r, t_min, t_max, rec)
+    fn hit<'a>(&'a self, r: &Ray, t_min: f64, t_max: f64) -> Option<HitRecord<'a>> {
+        self.hit_bvh(&self.bvh, r, t_min, t_max)
     }
 }
 

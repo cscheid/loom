@@ -1,35 +1,27 @@
 use vector::Vec3;
 use ray::Ray;
 use material::Material;
-use std::rc::Rc;
 use aabb::AABB;
 
-pub struct HitRecord {
+pub struct HitRecord<'a> {
     pub t: f64,
     pub p: Vec3,
     pub normal: Vec3,
-    pub material: Option<Rc<Material>>
+    pub material: &'a Material
 }
 
-impl HitRecord {
-    pub fn new() -> HitRecord {
+impl<'a> HitRecord<'a> {
+    pub fn hit(t: f64, p: Vec3, normal: Vec3, material: &'a Material) -> HitRecord<'a> {
         HitRecord {
-            t: 0.0,
-            p: Vec3::new(0.0, 0.0, 0.0),
-            normal: Vec3::new(0.0, 0.0, 0.0),
-            material: None
+            t: t,
+            p: p,
+            normal: normal,
+            material: material
         }
-    }
-
-    pub fn set(&mut self, other: &HitRecord) {
-        self.t = other.t;
-        self.p = other.p;
-        self.normal = other.normal;
-        self.material = other.material.as_ref().cloned();
     }
 }
 
 pub trait Hitable {
-    fn hit(&self, r: &Ray, t_min: f64, t_max: f64, rec: &mut HitRecord) -> bool;
+    fn hit<'a>(&'a self, r: &Ray, t_min: f64, t_max: f64) -> Option<HitRecord<'a>>;
     fn bounding_box(&self) -> Option<AABB>;
 }

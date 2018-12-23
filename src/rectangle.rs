@@ -3,7 +3,6 @@ use aabb;
 use hitable::*;
 use material::*;
 use ray::Ray;
-use std::rc::Rc;
 use vector::Vec3;
 use vector;
     
@@ -18,14 +17,14 @@ pub struct Rectangle {
     pub bottom_left: Vec3,
     pub right: Vec3,
     pub up: Vec3,
-    pub material: Rc<Material>,
+    pub material: Box<Material>,
     pub normal: Vec3,
     pub bounding_box: Option<AABB>
 }
 
 impl Rectangle {
     pub fn new(bottom_left: Vec3, right: Vec3, up: Vec3,
-               material: Rc<Material>) -> Rectangle {
+               material: Box<Material>) -> Rectangle {
         let p1 = bottom_left + right;
         let p2 = bottom_left + up;
         let p3 = p2 + right;
@@ -49,8 +48,8 @@ impl Rectangle {
 }
 
 impl Hitable for Rectangle {
-    fn hit(&self, ray: &Ray, t_min: f64, t_max: f64,
-           rec: &mut HitRecord) -> bool {
+    fn hit<'a>(&'a self, ray: &Ray, t_min: f64, t_max: f64) ->
+        Option<HitRecord<'a>> {
         // the intersection is given by the solution of
         // b: bottom_left
         // r: right
@@ -97,13 +96,17 @@ impl Hitable for Rectangle {
 
         if alpha <= 0.0 || alpha >= 1.0 || beta <= 0.0 || beta >= 1.0 ||
             gamma >= t_max || gamma <= t_min {
-            false
+            None
         } else {
-            rec.t = gamma;
-            rec.p = ray.point_at_parameter(rec.t);
-            rec.normal = self.normal;
-            rec.material = Some(Rc::clone(&self.material));
-            true
+            Some(HitRecord::hit(gamma,
+                                ray.point_at_parameter(gamma),
+                                self.normal,
+                                &*self.material))
+            // rec.t = gamma;
+            // rec.p = ;
+            // rec.normal = self.normal;
+            // rec.material = Some(&*self.material);
+            // true
         }
     }
 

@@ -9,3 +9,5 @@
   serde very deeply right now.
 
 - I need a consistency pass on Vec3 vs &Vec3 parameters.
+
+- I need a consistency pass on whether I want to return a box or an object on materials vs scene objects

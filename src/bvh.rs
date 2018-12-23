@@ -26,30 +26,27 @@ impl Hitable for BVH {
     fn bounding_box(&self) -> Option<AABB> {
         Some(self.bbox)
     }
-    fn hit(&self, r: &Ray, t_min: f64, t_max: f64, rec: &mut HitRecord) -> bool {
+    fn hit<'a>(&'a self, r: &Ray, t_min: f64, t_max: f64) -> Option<HitRecord<'a>> {
         if self.bbox.hit(r, t_min, t_max) {
-            let mut left_rec = HitRecord::new();
-            let mut right_rec = HitRecord::new();
-            let hit_left = self.left.hit(r, t_min, t_max, &mut left_rec);
-            let hit_right = self.right.hit(r, t_min, t_max, &mut right_rec);
-            if hit_left && hit_right {
-                if left_rec.t < right_rec.t {
-                    rec.set(&left_rec)
-                } else {
-                    rec.set(&right_rec)
-                }
-                true
-            } else if hit_left {
-                rec.set(&left_rec);
-                true
-            } else if hit_right {
-                rec.set(&right_rec);
-                true
-            } else {
-                false
+            // let mut left_rec = HitRecord::new();
+            // let mut right_rec = HitRecord::new();
+            let hit_left = self.left.hit(r, t_min, t_max);
+            let hit_right = self.right.hit(r, t_min, t_max);
+            
+            match (hit_left, hit_right) {
+                (Some(left_rec), Some(right_rec)) => {
+                    if left_rec.t < right_rec.t {
+                        Some(left_rec)
+                    } else {
+                        Some(right_rec)
+                    }
+                },
+                (Some(left_rec), None) => Some(left_rec),
+                (None, Some(right_rec)) => Some(right_rec),
+                (None, None) => None
             }
         } else {
-            false
+            None
         }
     }
 }

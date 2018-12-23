@@ -5,7 +5,6 @@ use ray::Ray;
 use hitable::*;
 use random::*;
 
-use std::rc::Rc;
 use std::fmt;
 use std::fmt::Debug;
 
@@ -60,8 +59,8 @@ impl Material for Dielectric {
 
 
 impl Dielectric {
-    pub fn new(refraction_index: f64) -> Rc<Material> {
-        Rc::new(Dielectric {
+    pub fn new(refraction_index: f64) -> Box<Material> {
+        Box::new(Dielectric {
             refraction_index: refraction_index
         })
     }

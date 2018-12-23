@@ -19,7 +19,6 @@ use std::fs::File;
 use std::io::BufReader;
 use std::iter::*;
 use std::option::*;
-use std::rc::Rc;
 use std::vec::*;
 
 use serde_json;
@@ -74,7 +73,7 @@ pub fn deserialize_camera(v: &Value) -> Option<Camera>
     }
 }
 
-pub fn deserialize_dielectric(v: &Value) -> Option<Rc<Material>>
+pub fn deserialize_dielectric(v: &Value) -> Option<Box<Material>>
 {
     match v {
         &Value::Object(ref m) => {
@@ -86,7 +85,7 @@ pub fn deserialize_dielectric(v: &Value) -> Option<Rc<Material>>
     }
 }
 
-pub fn deserialize_emitter(v: &Value) -> Option<Rc<Material>>
+pub fn deserialize_emitter(v: &Value) -> Option<Box<Material>>
 {
     match v {
         &Value::Object(ref m) => {
@@ -97,7 +96,7 @@ pub fn deserialize_emitter(v: &Value) -> Option<Rc<Material>>
     }
 }
 
-pub fn deserialize_lambertian(v: &Value) -> Option<Rc<Material>>
+pub fn deserialize_lambertian(v: &Value) -> Option<Box<Material>>
 {
     match v {
         &Value::Object(ref m) => {
@@ -108,7 +107,7 @@ pub fn deserialize_lambertian(v: &Value) -> Option<Rc<Material>>
     }
 }
 
-pub fn deserialize_metal(v: &Value) -> Option<Rc<Material>>
+pub fn deserialize_metal(v: &Value) -> Option<Box<Material>>
 {
     match v {
         &Value::Object(ref m) => {
@@ -119,7 +118,7 @@ pub fn deserialize_metal(v: &Value) -> Option<Rc<Material>>
     }
 }
 
-pub fn deserialize_mixture(v: &Value) -> Option<Rc<Material>>
+pub fn deserialize_mixture(v: &Value) -> Option<Box<Material>>
 {
     match v {
         &Value::Object(ref m) => {
@@ -270,7 +269,7 @@ pub fn deserialize_hitable_list(v: &Value) -> Option<Box<Hitable>>
 
 //////////////////////////////////////////////////////////////////////////////
 
-pub fn deserialize_background(v: &Value) -> Option<Rc<Background>>
+pub fn deserialize_background(v: &Value) -> Option<Box<Background>>
 {
     match v {
         &Value::Object(ref m) => {
@@ -289,9 +288,9 @@ pub fn deserialize_background(v: &Value) -> Option<Rc<Background>>
         },
         &Value::String(ref m) => {
             if m == &"sky".to_string() {
-                Some(Rc::new(sky()))
+                Some(Box::new(sky()))
             } else if m == &"overhead_light".to_string() {
-                Some(Rc::new(overhead_light()))
+                Some(Box::new(overhead_light()))
             } else {
                 None
             }
@@ -300,7 +299,7 @@ pub fn deserialize_background(v: &Value) -> Option<Rc<Background>>
     }
 }
 
-pub fn deserialize_constant_background(v: &Value) -> Option<Rc<Background>>
+pub fn deserialize_constant_background(v: &Value) -> Option<Box<Background>>
 {
     match v {
         &Value::Object(ref m) => {
@@ -308,14 +307,14 @@ pub fn deserialize_constant_background(v: &Value) -> Option<Rc<Background>>
             if color.is_none() {
                 None
             } else {
-                Some(Rc::new(constant(color.unwrap())))
+                Some(Box::new(constant(color.unwrap())))
             }
         },
         _ => None
     }
 }
 
-pub fn deserialize_material(v: &Value) -> Option<Rc<Material>>
+pub fn deserialize_material(v: &Value) -> Option<Box<Material>>
 {
     match v {
         &Value::Object(ref m) => {

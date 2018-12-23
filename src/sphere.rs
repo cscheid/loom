@@ -2,7 +2,6 @@ use aabb::AABB;
 use hitable::*;
 use material::*;
 use ray::Ray;
-use std::rc::Rc;
 use vector::Vec3;
 use vector;
 
@@ -10,17 +9,18 @@ use vector;
 pub struct Sphere {
     pub center: Vec3,
     pub radius: f64,
-    pub material: Rc<Material>
+    pub material: Box<Material>
 }
 
 impl Sphere {
-    pub fn new(center: Vec3, radius: f64, material: Rc<Material>) -> Sphere {
+    pub fn new(center: Vec3, radius: f64, material: Box<Material>) -> Sphere {
         Sphere { center: center, radius: radius, material: material }
     }
 }
 
 impl Hitable for Sphere {
-    fn hit(&self, r: &Ray, t_min: f64, t_max: f64, rec: &mut HitRecord) -> bool {
+    fn hit<'a>(&'a self, r: &Ray, t_min: f64, t_max: f64) ->
+        Option<HitRecord<'a>> {
         let oc = r.origin() - self.center;
         let a = vector::dot(&r.direction(), &r.direction());
         let b = vector::dot(&oc, &r.direction());
@@ -29,22 +29,20 @@ impl Hitable for Sphere {
         if discriminant > 0.0 {
             let temp1 = (-b - discriminant.sqrt()) / a;
             if temp1 < t_max && temp1 > t_min {
-                rec.t = temp1;
-                rec.p = r.point_at_parameter(rec.t);
-                rec.normal = (rec.p - self.center) / self.radius;
-                rec.material = Some(Rc::clone(&self.material));
-                return true;
+                let t = temp1;
+                let p = r.point_at_parameter(t);
+                let normal = (p - self.center) / self.radius;
+                return Some(HitRecord::hit(t, p, normal, &*self.material))
             }
             let temp2 = (-b + discriminant.sqrt()) / a;
             if temp2 < t_max && temp2 > t_min {
-                rec.t = temp2;
-                rec.p = r.point_at_parameter(rec.t);
-                rec.normal = (rec.p - self.center) / self.radius;
-                rec.material = Some(Rc::clone(&self.material));
-                return true;
+                let t = temp2;
+                let p = r.point_at_parameter(t);
+                let normal = (p - self.center) / self.radius;
+                return Some(HitRecord::hit(t, p, normal, &*self.material))
             }
         }
-        return false;
+        None
     }
 
     fn bounding_box(&self) -> Option<AABB> {

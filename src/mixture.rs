@@ -4,7 +4,6 @@ use ray::Ray;
 use hitable::*;
 use random::*;
 
-use std::rc::Rc;
 use std::fmt;
 use std::fmt::Debug;
 
@@ -12,8 +11,8 @@ use std::fmt::Debug;
 
 #[derive(Debug)]
 pub struct Mixture {
-    mat_1: Rc<Material>,
-    mat_2: Rc<Material>,
+    mat_1: Box<Material>,
+    mat_2: Box<Material>,
     u: f64
 }
 
@@ -32,10 +31,10 @@ impl Material for Mixture {
 }
 
 impl Mixture {
-    pub fn new(mat_1: Rc<Material>,
-               mat_2: Rc<Material>,
-               u: f64) -> Rc<Material> {
-        Rc::new(Mixture {
+    pub fn new(mat_1: Box<Material>,
+               mat_2: Box<Material>,
+               u: f64) -> Box<Material> {
+        Box::new(Mixture {
             mat_1: mat_1,
             mat_2: mat_2,
             u: u

@@ -4,7 +4,6 @@ use sampling;
 use ray::Ray;
 use hitable::*;
 
-use std::rc::Rc;
 use std::fmt;
 use std::fmt::Debug;
 
@@ -31,8 +30,8 @@ impl Material for Lambertian {
 }
 
 impl Lambertian {
-    pub fn new(albedo: &Vec3) -> Rc<Material> {
-        Rc::new(Lambertian {
+    pub fn new(albedo: &Vec3) -> Box<Material> {
+        Box::new(Lambertian {
             albedo: *albedo
         })
     }

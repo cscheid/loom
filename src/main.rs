@@ -50,7 +50,6 @@ use std::fs::File;
 use std::io::BufWriter;
 use std::io::BufReader;
 use std::io::Write;
-use std::rc::Rc;
 use std::time::SystemTime;
 
 use serde_json::*;
@@ -58,29 +57,27 @@ use serde_json::*;
 //////////////////////////////////////////////////////////////////////////////
 
 fn color(ray: &Ray, world: &Hitable,
-         background: &Rc<Background>,
+         background: &Box<Background>,
          depth: i32) -> Vec3 where
 {
-    let mut r = HitRecord::new();
-
-    if world.hit(ray, 0.00001, 1e20, &mut r) {
-        if depth >= 50 {
-            Vec3::new(0.0, 0.0, 0.0)
-        } else {
-            match r.material
-                .as_ref()
-                .expect("right here, yes")
-                .scatter(ray, &r) {
+    match world.hit(ray, 0.00001, 1e20) {
+        None => {
+            let unit_direction = vector::unit_vector(&ray.direction());
+            background.get_background(&unit_direction)
+        },
+        Some(r) => {
+            if depth >= 50 {
+                Vec3::new(0.0, 0.0, 0.0)
+            } else {
+                match r.material.scatter(ray, &r) {
                     material::Scatter::Bounce(attenuation, scattered) => {
                         attenuation * color(&scattered, world, background, depth+1)
                     },
                     material::Scatter::Emit(emission) => emission,
                     material::Scatter::Absorb => Vec3::new(0.0, 0.0, 0.0)
                 }
+            }
         }
-    } else {
-        let unit_direction = vector::unit_vector(&ray.direction());
-        background.get_background(&unit_direction)
     }
 }
 
@@ -160,7 +157,7 @@ fn write_image(args: &Args)
 
     let bvh_world = BVH::build(scene.object_list);
 
-    let background = scene.background;
+    let background = &scene.background;
 
     let camera = scene.camera;
 
@@ -184,7 +181,7 @@ fn write_image(args: &Args)
                 let u = ((i as f64) + rng.gen::<f64>()) / (nx as f64);
                 let v = ((j as f64) + rng.gen::<f64>()) / (ny as f64);
                 let r = camera.get_ray(u, v);
-                output_image[j][i] = output_image[j][i] + color(&r, &*bvh_world, &background, 0);
+                output_image[j][i] = output_image[j][i] + color(&r, &*bvh_world, background, 0);
             }
         }
         match last_write.elapsed() {
