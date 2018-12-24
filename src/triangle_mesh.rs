@@ -238,11 +238,10 @@ fn it_works() {
     let ray1 = Ray::new(Vec3::new(0.25, 0.25, -1.0), Vec3::new(0.0, 0.0, 1.0));
     let ray2 = Ray::new(Vec3::new(0.75, 0.75, -1.0), Vec3::new(0.0, 0.0, 1.0));
 
-    let mut hr = HitRecord::new();
+    assert!(mesh.hit(&ray1, 0.00001, 1e30).is_some());
+    assert!(mesh.hit(&ray2, 0.00001, 1e30).is_none());
 
-    assert!( mesh.hit(&ray1, 0.00001, 1e30, &mut hr));
-    assert!(!mesh.hit(&ray2, 0.00001, 1e30, &mut hr));
-
-    mesh.hit(&ray1, 0.00001, 1e30, &mut hr);
-    assert!(within_eps(&hr.normal, &Vec3::new(0.0, 0.0, 1.0)));
+    let hr = mesh.hit(&ray1, 0.00001, 1e30);
+    assert!(hr.is_some());
+    assert!(within_eps(&hr.unwrap().normal, &Vec3::new(0.0, 0.0, 1.0)));
 }

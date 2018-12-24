@@ -210,6 +210,12 @@ fn write_image(args: &Args)
         for s in 1..ns+1 {
             update_all_pixels(&mut output_image,
                               &camera, bvh_world_ref, background_ref, nx, ny, &mut rng);
+            if i == 0 {
+                eprint!("\r                          \r{} / {} done", s, ns);
+            }
+        }
+        if i == 0 {
+            eprintln!("\nFinished");
         }
             
         ImageSummaries {

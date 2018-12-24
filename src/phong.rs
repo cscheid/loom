@@ -1,6 +1,6 @@
 // "phong": this is just a disgusting approximation to a glossy material
 // glossiness: 0 is metal
-//             1 is ~lambertian but not really
+//             1 is lambertian
 
 use material::*;
 use vector::Vec3;
@@ -20,22 +20,23 @@ pub struct Phong {
 
 impl Material for Phong {
     fn scatter(&self, ray_in: &Ray, rec: &HitRecord) -> Scatter {
-        let r = vector::reflect(&vector::unit_vector(&ray_in.direction()), &rec.normal);
+        // lambertian
+        let lambertian_target;
+        if rec.normal.dot(&ray_in.direction()) > 0.0 {
+            lambertian_target = rec.p - rec.normal + sampling::random_in_unit_sphere();
+        } else {
+            lambertian_target = rec.p + rec.normal + sampling::random_in_unit_sphere();
+        }
 
-        // t is the normal of the disk from which we're sampling the
-        // glossiness factor
-        let t = Vec3::new(0.0, 0.0, 1.0);
-        let g = sampling::random_in_unit_disk() * self.glossiness;
-        let k = vector::cross(&r, &t);
+        // metal
+        let metal_target = vector::reflect(&vector::unit_vector(&ray_in.direction()), &rec.normal);
 
-        let theta = k.length();
-        let kd = k * (1.0 / theta); // vector::unit_vector(k);
-        let rotatedg = vector::rotate(&g, &kd, theta);
+        // yay for hacks: glossy: lerp(lambertian, reflected, glossiness)
+        let scattered = vector::lerp(&metal_target,
+                                     &lambertian_target, self.glossiness);
 
-        let reflected = rotatedg + r;
-
-        if reflected.dot(&rec.normal) > 0.0 {
-            Scatter::Bounce(self.albedo, Ray::new(rec.p, reflected))
+        if scattered.dot(&rec.normal) > 0.0 {
+            Scatter::Bounce(self.albedo, Ray::new(rec.p, scattered))
         } else {
             Scatter::Absorb
         }

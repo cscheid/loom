@@ -200,6 +200,17 @@ pub fn rotate(v: &Vec3, k: &Vec3, theta: f64) -> Vec3 {
     (*v) * cos + cross(k, v) * sin + (*k * dot(k, v)) * (1.0 - cos)
 }
 
+// rotate v about k by theta, given sin(theta) and cos(theta)
+// assumes k is unit length!!!
+pub fn rotate_sincos(v: &Vec3, k: &Vec3, sin: f64, cos: f64) -> Vec3 {
+    // let sin_cos = theta.sin_cos();
+    // let sin = sin_cos.0;
+    // let cos = sin_cos.1;
+
+    // v_rot = v cos + (k cross v) sin + k (k dot v) (1 - cos)
+    (*v) * cos + cross(k, v) * sin + (*k * dot(k, v)) * (1.0 - cos)
+}
+
 //////////////////////////////////////////////////////////////////////////////
 // interpreting vec3 as rgb color
 
@@ -235,6 +246,16 @@ fn it_works() {
         assert!(within_eps(&(r1 * -1.0), &(-r1)));
     }
 
+    for _ in 0..100 {
+        let r1 = unit_vector(&random_vec());
+        let r2 = unit_vector(&random_vec());
+        let rf = rng.gen::<f64>();
+
+        let v = cross(&r1, &r2);
+        let axis = unit_vector(&v);
+        let cos_angle = dot(&r1, &r2) / (r1.length() * r2.length());
+        assert!(within_eps(&rotate(&r1, &axis, cos_angle.acos()), &r2));
+    }
     // FIXME: test cross product
     // println!("v1 cross v2 is {:?}", cross(&v1, &v2));
 }
