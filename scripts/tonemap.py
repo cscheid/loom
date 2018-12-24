@@ -29,14 +29,14 @@ def log_average_luminance(array):
 
 l_w = luminance(image_array) + 0.001
 try:
-    l_white = float(sys.argv[2])
+    l_white = float(sys.argv[1])
     if l_white == -1:
         l_white = l_w.max()
 except:
     l_white = l_w.max()
 
 try:
-    a = float(sys.argv[3])
+    a = float(sys.argv[2])
 except IndexError:
     a = 0.18
 
