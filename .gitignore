@@ -7,4 +7,5 @@ Cargo.lock
 **/*.rs.bk
 
 *~
+*.pyc
 __pycache__

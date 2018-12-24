@@ -22,6 +22,7 @@ mod lambertian;
 mod material;
 mod metal;
 mod mixture;
+mod phong;
 mod random;
 mod ray;
 mod rectangle;

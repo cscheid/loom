@@ -60,4 +60,4 @@ image_array[image_array < 0] = 0
 i8_array = scipy.array(image_array * 255, 'u8')
 image = Image.fromarray(i8_array.astype('uint8'))
 image.show()
-image.save(sys.argv[1])
+image.save(sys.argv[3])

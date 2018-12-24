@@ -1,9 +1,13 @@
 from background import *
 from camera import *
 from emitter import *
+from metal import *
 from rectangle import *
+from sphere import *
 from lambertian import *
+from phong import *
 from triangle_mesh import *
+from materials import *
 
 import json
 

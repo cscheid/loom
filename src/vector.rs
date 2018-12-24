@@ -189,6 +189,17 @@ pub fn refract(v: &Vec3, n: &Vec3, ni_over_nt: f64) -> Option<Vec3> {
     }
 }
 
+// rotate v about k by theta
+// assumes k is unit length!!!
+pub fn rotate(v: &Vec3, k: &Vec3, theta: f64) -> Vec3 {
+    let sin_cos = theta.sin_cos();
+    let sin = sin_cos.0;
+    let cos = sin_cos.1;
+
+    // v_rot = v cos + (k cross v) sin + k (k dot v) (1 - cos)
+    (*v) * cos + cross(k, v) * sin + (*k * dot(k, v)) * (1.0 - cos)
+}
+
 //////////////////////////////////////////////////////////////////////////////
 // interpreting vec3 as rgb color
 
