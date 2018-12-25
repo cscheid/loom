@@ -50,4 +50,10 @@ impl Hitable for HitableList {
     fn bounding_box(&self) -> Option<AABB> {
         self.bbox
     }
+
+    
+    fn importance_distribution(&self) -> Option<AABB> {
+        panic!("importance_distribution called on hitable_list!");
+        None
+    }
 }

@@ -15,6 +15,7 @@ mod bvh;
 mod camera;
 mod deserialize;
 mod dielectric;
+mod disc;
 mod emitter;
 mod hitable;
 mod hitable_list;
@@ -23,29 +24,34 @@ mod material;
 mod metal;
 mod mixture;
 mod phong;
+mod plane;
 mod random;
 mod ray;
 mod rectangle;
 mod scene;
 mod sampling;
 mod sphere;
+mod sphere_geometry;
 mod triangle_mesh;
 mod vector;
 mod tests;
 
+use aabb::AABB;
 use background::*;
 use bvh::BVH;
 use camera::Camera;
 use deserialize::*;
+use disc::*;
+use getopts::Options;
+use hitable::*;
 use hitable_list::*;
 use metal::Metal;
 use rand::Rng;
+use random::*;
 use ray::Ray;
 use scene::Scene;
 use vector::Vec3;
-use hitable::*;
-use getopts::Options;
-
+    
 use std::cmp;
 use std::env;
 use std::fs::File;
@@ -62,27 +68,103 @@ use serde_json::*;
 
 fn color(ray: &Ray, world: &Hitable,
          background: &Background,
-         depth: i32) -> Vec3 where
+         lights: &Vec<AABB>) -> Vec3 where
 {
-    match world.hit(ray, 0.00001, 1e20) {
-        None => {
-            let unit_direction = vector::unit_vector(&ray.direction());
-            background.get_background(&unit_direction)
-        },
-        Some(r) => {
-            if depth >= 50 {
-                Vec3::new(0.0, 0.0, 0.0)
-            } else {
-                match r.material.scatter(ray, &r) {
-                    material::Scatter::Bounce(attenuation, scattered) => {
-                        attenuation * color(&scattered, world, background, depth+1)
-                    },
-                    material::Scatter::Emit(emission) => emission,
-                    material::Scatter::Absorb => Vec3::new(0.0, 0.0, 0.0)
+    let mut current_ray = *ray;
+    let mut current_attenuation = Vec3::new(1.0, 1.0, 1.0);
+        
+    for depth in 0..50 {
+        if current_attenuation.length() < 1e-8 {
+            return Vec3::new(0.0, 0.0, 0.0)
+        }
+        
+        match world.hit(&current_ray, 0.00001, 1e20) {
+            None => {
+                let unit_direction = vector::unit_vector(&current_ray.direction());
+                return background.get_background(&unit_direction) * current_attenuation;
+            },
+            Some(r) => {
+                if !r.material.wants_importance_sampling() || lights.len() == 0 {
+                    match r.material.scatter(&current_ray, &r) {
+                        material::Scatter::Bounce(next_attenuation, scattered) => {
+                            current_attenuation = current_attenuation * next_attenuation;
+                            current_ray = scattered;
+                        },
+                        material::Scatter::Emit(emission) => {
+                            // println!("Hit light!");
+                            return emission * current_attenuation;
+                        },
+                        material::Scatter::Absorb => {
+                            return Vec3::new(0.0, 0.0, 0.0)
+                        }
+                    }
+                    continue;
                 }
+                
+                // 1-sample MC from importance-sampling distribution:
+                let u = 0.9; // this should be a parameter carefully chosen
+                let this_hemi = Disc::new(r.p, r.normal, 1.0);
+                
+                let next_values = if rand_double() < u { // sample from lights
+                    // println!("Sampling from light.");
+                    // choose a disc
+                    let chosen_light = &lights[rand_range(0, lights.len())];
+                    let chosen_disc = chosen_light.project_to_disc_on_sphere(&r.p);
+                    // println!("This hemi: {:?}", this_hemi);
+                    // println!("Sampling from disc: {:?}", &chosen_disc);
+
+                    // sample from that disc
+                    let gx_sample        = this_hemi.hemi_disc_subtended_angle(&chosen_disc);
+                    let gx               = gx_sample.0;
+                    let sample_direction = gx_sample.1;
+
+                    let next_ray = Ray::new(r.p, sample_direction);
+                    // println!("Disc sample: {:?}", &next_ray);
+                    let fx = r.material.bsdf(&next_ray, &r.normal);
+                    // println!("gx: {:?}", &gx_v);
+                    // println!("fx: {:?}", &fx);
+                    let next_attenuation = if fx.abs() < 1e-8 {
+                        Vec3::new(0.0, 0.0, 0.0)
+                    } else {
+                        r.material.albedo(&next_ray, &r.normal) * (fx / ((1.0 - u) * gx + u * fx))
+                    };
+                    // println!("Next attenuation from lights sample: {:?}", &next_attenuation);
+
+                    (next_attenuation, next_ray)
+                } else {
+                    match r.material.scatter(&current_ray, &r) {
+                        material::Scatter::Bounce(attenuation, scattered) => {
+                            // this is very very inefficient with many lights.
+                            let gx : f64 = lights.iter()
+                                .map(|l| l.project_to_disc_on_sphere(&r.p))
+                                .filter(|d| d.intersect_ray(&scattered).is_some())
+                                .map(|d| this_hemi.hemi_disc_subtended_angle(&d).0)
+                                .sum();
+                            let fx = r.material.bsdf(&current_ray, &r.normal);
+
+                            let next_attenuation = if fx.abs() < 1e-8 {
+                                Vec3::new(0.0, 0.0, 0.0)
+                            } else {
+                                attenuation * (fx / ((1.0 - u) * gx + u * fx))
+                            };
+                            // println!("Next attenuation from bsdf sample: {:?}", &next_attenuation);
+
+                            (next_attenuation, scattered)
+                        },
+                        material::Scatter::Emit(emission) => {
+                            return emission * current_attenuation;
+                        },
+                        material::Scatter::Absorb => {
+                            return Vec3::new(0.0, 0.0, 0.0)
+                        }
+                    }
+                };
+                current_attenuation = current_attenuation * next_values.0;
+                current_ray = next_values.1;
             }
         }
     }
+    current_attenuation
 }
 
 //////////////////////////////////////////////////////////////////////////////
@@ -120,6 +202,7 @@ fn update_all_pixels(output_image: &mut Vec<Vec<Vec3>>,
                      camera: &Camera,
                      bvh_world: &Hitable,
                      background: &Background,
+                     lights: &Vec<AABB>,
                      nx: usize,
                      ny: usize,
                      rng: &mut rand::ThreadRng) {
@@ -128,7 +211,7 @@ fn update_all_pixels(output_image: &mut Vec<Vec<Vec3>>,
             let u = ((i as f64) + rng.gen::<f64>()) / (nx as f64);
             let v = ((j as f64) + rng.gen::<f64>()) / (ny as f64);
             let r = camera.get_ray(u, v);
-            output_image[j][i] = output_image[j][i] + color(&r, &*bvh_world, &*background, 0);
+            output_image[j][i] = output_image[j][i] + color(&r, bvh_world, background, lights);
         }
     }
 }
@@ -190,6 +273,20 @@ fn write_image(args: &Args)
     let scene          = deserialize_scene(&json_value).unwrap();
     let background     = scene.background;
     let camera         = scene.camera;
+    let lights: Vec<_> = scene.object_list
+        .iter()
+        .map(|h| h.importance_distribution())
+        .filter(|h| h.is_some())
+        .map(|h| h.unwrap())
+        .collect();
+    println!("Found {} lights", lights.len());
+    println!("Light 1: {:?}", lights[0]);
+    let v1 = Vec3::new(0.0, 0.0, 0.0);
+    let v2 = Vec3::new(-2.0, 2.0, 0.0);
+    let v3 = Vec3::new(0.0, -2.0, 0.0);
+    println!(" projection onto {:?}: {:?}", v1, lights[0].project_to_disc_on_sphere(&v1));
+    println!(" projection onto {:?}: {:?}", v2, lights[0].project_to_disc_on_sphere(&v2));
+    println!(" projection onto {:?}: {:?}", v3, lights[0].project_to_disc_on_sphere(&v3));
     let bvh_world      = BVH::build(scene.object_list);
     let ny             = args.h.unwrap_or(200);
     let nx             = args.w.unwrap_or_else(|| ((ny as f64) * camera.params.aspect).round() as usize);
@@ -209,7 +306,8 @@ fn write_image(args: &Args)
             
         for s in 1..ns+1 {
             update_all_pixels(&mut output_image,
-                              &camera, bvh_world_ref, background_ref, nx, ny, &mut rng);
+                              &camera, bvh_world_ref, background_ref, &lights,
+                              nx, ny, &mut rng);
             if i == 0 {
                 eprint!("\r                          \r{} / {} done", s, ns);
             }

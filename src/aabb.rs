@@ -1,5 +1,6 @@
 use vector::*;
 use ray::*;
+use disc::*;
 
 #[derive(Copy, Debug, Clone)]
 pub struct AABB {
@@ -68,6 +69,35 @@ impl AABB {
             }
         }
         true
+    }
+
+    // far from best possible disc, but eh
+    pub fn project_to_disc_on_sphere(&self, center: &Vec3) -> Disc {
+        let mut pts = vec![
+            Vec3::new(self._min[0], self._min[1], self._min[2]),
+            Vec3::new(self._min[0], self._min[1], self._max[2]),
+            Vec3::new(self._min[0], self._max[1], self._min[2]),
+            Vec3::new(self._min[0], self._max[1], self._max[2]),
+            Vec3::new(self._max[0], self._min[1], self._min[2]),
+            Vec3::new(self._max[0], self._min[1], self._max[2]),
+            Vec3::new(self._max[0], self._max[1], self._min[2]),
+            Vec3::new(self._max[0], self._max[1], self._max[2])];
+
+        let mut average = Vec3::new(0.0, 0.0, 0.0);
+        for i in 0..8 {
+            let p_v = *center + unit_vector(&(pts[i] - *center));
+            pts[i] = p_v;
+            average = average + p_v;
+        }
+        average = average / 8.0;
+        let mut max_dist = 0.0;
+        for i in 0..8 {
+            let d = (average - pts[i]).length();
+            if d > max_dist {
+                max_dist = d;
+            }
+        }
+        return Disc::new(average, *center - average, max_dist);
     }
 }
 

@@ -49,12 +49,18 @@ impl Hitable for BVH {
             None
         }
     }
+    // this should never be called
+    fn importance_distribution(&self) -> Option<AABB> {
+        panic!("importance_distribution called on BVH!");
+        None
+    }
 }
 
 // profiled on a relatively small scene - should probably do this more carefully.
 const MIN_LENGTH: usize = 32;
 
 impl BVH {
+   
     pub fn build(mut objs: Vec<Box<Hitable + Send + Sync>>) -> Box<Hitable + Send + Sync> {
         if objs.len() == 0 {
             panic!("Need nonempty objs!");

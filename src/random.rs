@@ -24,3 +24,10 @@ pub fn rand_double() -> f64 {
     //     RNG.as_mut().unwrap().gen::<f64>()
     // }
 }
+
+#[inline]
+pub fn rand_range(min: usize, max: usize) -> usize
+{
+    let u = (rand_double() * (max - min) as f64) as usize;
+    u + min
+}

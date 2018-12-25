@@ -113,6 +113,14 @@ impl Hitable for Rectangle {
     fn bounding_box(&self) -> Option<AABB> {
         self.bounding_box
     }
+
+    fn importance_distribution(&self) -> Option<AABB> {
+        if self.material.is_emitter() {
+            self.bounding_box()
+        } else {
+            None
+        }
+    }
 }
 
 #[test]

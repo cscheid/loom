@@ -19,6 +19,23 @@ pub struct Phong {
 }
 
 impl Material for Phong {
+    fn wants_importance_sampling(&self) -> bool
+    {
+        false
+    }
+    
+    fn bsdf(&self, ray: &Ray, surface_normal: &Vec3) -> f64
+    {
+        panic!("Don't know how to evaluate this bsdf yet!!");
+        0.0
+    }
+    
+    fn albedo(&self, ray: &Ray, surface_normal: &Vec3) -> Vec3
+    {
+        panic!("Don't know how to evaluate this bsdf yet!!");
+        self.albedo
+    }
+    
     fn scatter(&self, ray_in: &Ray, rec: &HitRecord) -> Scatter {
         // lambertian
         let lambertian_target;
@@ -45,6 +62,8 @@ impl Material for Phong {
     fn debug(&self, f: &mut fmt::Formatter) -> fmt::Result {
         self.fmt(f)
     }
+
+    fn is_emitter(&self) -> bool { false }
 }
 
 impl Phong {

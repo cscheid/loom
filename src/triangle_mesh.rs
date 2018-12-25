@@ -223,6 +223,14 @@ impl Hitable for TriangleMesh {
     fn hit<'a>(&'a self, r: &Ray, t_min: f64, t_max: f64) -> Option<HitRecord<'a>> {
         self.hit_bvh(&self.bvh, r, t_min, t_max)
     }
+
+    fn importance_distribution(&self) -> Option<AABB> {
+        if self.material.is_emitter() {
+            self.bounding_box()
+        } else {
+            None
+        }
+    }
 }
 
 #[test]

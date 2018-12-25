@@ -13,6 +13,19 @@ pub struct Metal {
 }
 
 impl Material for Metal {
+    fn wants_importance_sampling(&self) -> bool { false }
+
+    // in truth it's a dirac delta but this is correct
+    // in all but a measure-zero set. effectively it
+    // means that importance sampling from the lights
+    // is useless
+    fn bsdf(&self, ray: &Ray, surface_normal: &Vec3) -> f64 {
+        0.0
+    }
+    fn albedo(&self, ray: &Ray, surface_normal: &Vec3) -> Vec3 {
+        self.albedo
+    }
+    
     fn scatter(&self, ray_in: &Ray, rec: &HitRecord) -> Scatter {
         let reflected = vector::reflect(&vector::unit_vector(&ray_in.direction()), &rec.normal);
         let scattered = Ray::new(rec.p, reflected);
@@ -26,6 +39,8 @@ impl Material for Metal {
     fn debug(&self, f: &mut fmt::Formatter) -> fmt::Result {
         self.fmt(f)
     }
+
+    fn is_emitter(&self) -> bool { false }
 }
 
 impl Metal {

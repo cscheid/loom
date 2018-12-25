@@ -20,6 +20,21 @@ fn schlick(cosine: f64, ref_idx: f64) -> f64 {
 }
 
 impl Material for Dielectric {
+
+    fn wants_importance_sampling(&self) -> bool { false }
+    
+    // in truth it's a dirac delta but this is correct
+    // in all but a measure-zero set. effectively it
+    // means that importance sampling from the lights
+    // is useless
+    fn bsdf(&self, ray: &Ray, surface_normal: &Vec3) -> f64 {
+        0.0
+    }
+
+    fn albedo(&self, ray: &Ray, surface_normal: &Vec3) -> Vec3 {
+        Vec3::new(1.0, 1.0, 1.0)
+    }
+    
     fn scatter(&self, r_in: &Ray, rec: &HitRecord) -> Scatter {
         let dot = r_in.direction().dot(&rec.normal);
         let reflected = vector::reflect(&r_in.direction(), &rec.normal);
@@ -55,6 +70,8 @@ impl Material for Dielectric {
     fn debug(&self, f: &mut fmt::Formatter) -> fmt::Result {
         self.fmt(f)
     }
+
+    fn is_emitter(&self) -> bool { false }
 }
 
 

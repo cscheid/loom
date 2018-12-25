@@ -1,5 +1,6 @@
 use material::*;
 use vector::Vec3;
+use vector;
 use ray::Ray;
 use hitable::*;
 use random::*;
@@ -17,8 +18,25 @@ pub struct Mixture {
 }
 
 impl Material for Mixture {
+    fn wants_importance_sampling(&self) -> bool {
+        self.mat_1.wants_importance_sampling() &&
+            self.mat_2.wants_importance_sampling()
+    }
+
+    fn bsdf(&self, ray: &Ray, surface_normal: &Vec3) -> f64 {
+        (1.0 - self.u) * &self.mat_1.bsdf(ray, surface_normal) +
+            self.u * &self.mat_2.bsdf(ray, surface_normal)
+    }
+    
+    fn albedo(&self, ray: &Ray, surface_normal: &Vec3) -> Vec3 {
+        vector::lerp(&self.mat_1.albedo(ray, surface_normal),
+                     &self.mat_2.albedo(ray, surface_normal),
+                     self.u)
+    }
+
+    
     fn scatter(&self, ray_in: &Ray, rec: &HitRecord) -> Scatter {
-        if rand_double() > self.u {
+        if rand_double() < self.u {
             self.mat_1.scatter(ray_in, rec)
         } else {
             self.mat_2.scatter(ray_in, rec)
@@ -27,6 +45,10 @@ impl Material for Mixture {
 
     fn debug(&self, f: &mut fmt::Formatter) -> fmt::Result {
         self.fmt(f)
+    }
+
+    fn is_emitter(&self) -> bool {
+        self.mat_1.is_emitter() || self.mat_2.is_emitter()
     }
 }
 

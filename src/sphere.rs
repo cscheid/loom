@@ -50,4 +50,12 @@ impl Hitable for Sphere {
         Some(AABB::new(self.center - Vec3::new(r, r, r),
                        self.center + Vec3::new(r, r, r)))
     }
+
+    fn importance_distribution(&self) -> Option<AABB> {
+        if self.material.is_emitter() {
+            self.bounding_box()
+        } else {
+            None
+        }
+    }
 }
