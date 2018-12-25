@@ -26,7 +26,10 @@ impl Material for Lambertian {
         if x <= 0.0 {
             0.0
         } else {
-            x / std::f64::consts::PI
+            // std::f64::consts::PI * x integrates to PI/2 over
+            // all directions of the hemisphere
+            // so x * 2 integrates to 1 over all directions
+            2.0 * x
         }
     }
 
@@ -63,4 +66,28 @@ impl Lambertian {
             albedo: *albedo
         })
     }
+}
+
+#[test]
+fn it_works() {
+    let m = Lambertian::new(&Vec3::new(1.0, 1.0, 1.0));
+    let n = 100000;
+    let sufficient = (0..n)
+        .map(|_| m.bsdf(&Ray::new(Vec3::new(0.0, 0.0, 0.0),
+                                  sampling::random_3d_direction()),
+                        &Vec3::new(0.0, 1.0, 0.0)))
+        .filter(|x| x > &1e-8)
+        .fold((0.0, 0.0, 0.0), |acc, next| {
+            (acc.0+1.0, acc.1+next, acc.2+next*next)
+        });
+    // quick and dirty one-sample t-test 
+    let n   = sufficient.0;
+    let ex  = sufficient.1/n;
+    let exx = sufficient.2/n;
+    let variance = exx - ex * ex;
+    let t   = (ex - 1.0) / (variance.sqrt() / (n as f64).sqrt());
+    println!("Average: {}", ex);
+    println!("Variance: {}", variance);
+    println!("t: {}", t);
+    assert!(t < 1.96 && t > -1.96);
 }
