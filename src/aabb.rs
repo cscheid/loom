@@ -97,7 +97,7 @@ impl AABB {
                 max_dist = d;
             }
         }
-        return Disc::new(average, *center - average, max_dist);
+        return Disc::new(average, unit_vector(&(*center - average)), max_dist);
     }
 }
 

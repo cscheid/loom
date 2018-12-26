@@ -83,9 +83,9 @@ fn color(ray: &Ray, world: &Hitable,
                 let unit_direction = vector::unit_vector(&current_ray.direction());
                 return background.get_background(&unit_direction) * current_attenuation;
             },
-            Some(r) => {
-                if !r.material.wants_importance_sampling() || lights.len() == 0 {
-                    match r.material.scatter(&current_ray, &r) {
+            Some(hr) => {
+                if !hr.material.wants_importance_sampling() || lights.len() == 0 {
+                    match hr.material.scatter(&current_ray, &hr) {
                         material::Scatter::Bounce(next_attenuation, scattered) => {
                             current_attenuation = current_attenuation * next_attenuation;
                             current_ray = scattered;
@@ -100,67 +100,66 @@ fn color(ray: &Ray, world: &Hitable,
                     }
                     continue;
                 }
-                
-                // 1-sample MC from importance-sampling distribution:
-                let u = 0.9; // this should be a parameter carefully chosen
-                let this_hemi = Disc::new(r.p, r.normal, 1.0);
-                
-                let next_values = if rand_double() < u { // sample from lights
-                    // println!("Sampling from light.");
-                    // choose a disc
+
+                let this_hemi = Disc::new(hr.p, hr.normal, 1.0);
+
+                let light = {
                     let chosen_light = &lights[rand_range(0, lights.len())];
-                    let chosen_disc = chosen_light.project_to_disc_on_sphere(&r.p);
-                    // println!("This hemi: {:?}", this_hemi);
-                    // println!("Sampling from disc: {:?}", &chosen_disc);
+                    let chosen_disc = chosen_light.project_to_disc_on_sphere(&hr.p);
 
                     // sample from that disc
                     let gx_sample        = this_hemi.hemi_disc_subtended_angle(&chosen_disc);
                     let gx               = gx_sample.0;
                     let sample_direction = gx_sample.1;
 
-                    let next_ray = Ray::new(r.p, sample_direction);
-                    // println!("Disc sample: {:?}", &next_ray);
-                    let fx = r.material.bsdf(&next_ray, &r.normal);
-                    // println!("gx: {:?}", &gx_v);
-                    // println!("fx: {:?}", &fx);
-                    let next_attenuation = if fx.abs() < 1e-8 {
-                        Vec3::new(0.0, 0.0, 0.0)
+                    if gx == 0.0 {
+                        (0.0, sample_direction)
                     } else {
-                        r.material.albedo(&next_ray, &r.normal) * (fx / ((1.0 - u) * gx + u * fx))
-                    };
-                    // println!("Next attenuation from lights sample: {:?}", &next_attenuation);
-
-                    (next_attenuation, next_ray)
-                } else {
-                    match r.material.scatter(&current_ray, &r) {
+                        (2.0 * std::f64::consts::PI / gx_sample.0, sample_direction)
+                    }
+                };
+                let scatter = {
+                    match hr.material.scatter(&current_ray, &hr) {
                         material::Scatter::Bounce(attenuation, scattered) => {
-                            // this is very very inefficient with many lights.
-                            let gx : f64 = lights.iter()
-                                .map(|l| l.project_to_disc_on_sphere(&r.p))
-                                .filter(|d| d.intersect_ray(&scattered).is_some())
-                                .map(|d| this_hemi.hemi_disc_subtended_angle(&d).0)
-                                .sum();
-                            let fx = r.material.bsdf(&current_ray, &r.normal);
-
-                            let next_attenuation = if fx.abs() < 1e-8 {
-                                Vec3::new(0.0, 0.0, 0.0)
-                            } else {
-                                attenuation * (fx / ((1.0 - u) * gx + u * fx))
-                            };
-                            // println!("Next attenuation from bsdf sample: {:?}", &next_attenuation);
-
-                            (next_attenuation, scattered)
-                        },
+                            (hr.material.bsdf(&scattered, &hr.normal),
+                             scattered.direction())
+                        }
                         material::Scatter::Emit(emission) => {
-                            return emission * current_attenuation;
+                            panic!("Whaaaaa emit?!");
+                            (0.0, Vec3::new(0.0, 0.0, 0.0))
                         },
                         material::Scatter::Absorb => {
-                            return Vec3::new(0.0, 0.0, 0.0)
+                            panic!("Whaaaaa absorb?!");
+                            (0.0, Vec3::new(0.0, 0.0, 0.0))
                         }
                     }
                 };
-                current_attenuation = current_attenuation * next_values.0;
+                let light_p = light.0;
+                let light_d = light.1;
+                let scatter_p = scatter.0;
+                let scatter_d = scatter.1;
+
+                // Veach's balance heuristic for a one-sample MIS estimator
+                // gives these weights:
+                let s         = light_p + scatter_p;
+                let light_w   = light_p   / s;
+                let scatter_w = scatter_p / s;
+
+                // println!("{} {}", light_p, scatter_p);
+
+                // the classic Veach one-sample MIS estimator is
+                //    (light_w / light_p) * light_f + (scatter_w / scatter_p) * scatter_f
+
+                let next_values = if (light_p > 0.0) && rand_double() < 0.5 { // sample from lights
+                    ((light_w / light_p)     * 2.0, Ray::new(hr.p, light_d))
+                } else if (scatter_p > 0.0) {
+                    ((scatter_w / scatter_p) * 2.0, Ray::new(hr.p, scatter_d))
+                } else {
+                    return Vec3::new(0.0, 0.0, 0.0);
+                };
                 current_ray = next_values.1;
+                let albedo = hr.material.albedo(&current_ray, &hr.normal);
+                current_attenuation = current_attenuation * albedo * next_values.0;
             }
         }
     }
@@ -279,14 +278,7 @@ fn write_image(args: &Args)
         .filter(|h| h.is_some())
         .map(|h| h.unwrap())
         .collect();
-    println!("Found {} lights", lights.len());
-    println!("Light 1: {:?}", lights[0]);
-    let v1 = Vec3::new(0.0, 0.0, 0.0);
-    let v2 = Vec3::new(-2.0, 2.0, 0.0);
-    let v3 = Vec3::new(0.0, -2.0, 0.0);
-    println!(" projection onto {:?}: {:?}", v1, lights[0].project_to_disc_on_sphere(&v1));
-    println!(" projection onto {:?}: {:?}", v2, lights[0].project_to_disc_on_sphere(&v2));
-    println!(" projection onto {:?}: {:?}", v3, lights[0].project_to_disc_on_sphere(&v3));
+    
     let bvh_world      = BVH::build(scene.object_list);
     let ny             = args.h.unwrap_or(200);
     let nx             = args.w.unwrap_or_else(|| ((ny as f64) * camera.params.aspect).round() as usize);

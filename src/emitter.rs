@@ -1,5 +1,6 @@
 use material::*;
 use vector::Vec3;
+use vector;
 use sampling;
 use ray::Ray;
 use hitable::*;
@@ -17,8 +18,12 @@ impl Material for Emitter {
     fn wants_importance_sampling(&self) -> bool { false }
 
     fn bsdf(&self, ray: &Ray, surface_normal: &Vec3) -> f64 {
-        panic!("Should never call bsdf for emitter");
-        0.0
+        let x = vector::unit_vector(&ray.direction()).dot(surface_normal);
+        if x <= 0.0 {
+            0.0
+        } else {
+            2.0 * x
+        }
     }
 
     fn albedo(&self, ray: &Ray, surface_normal: &Vec3) -> Vec3 {

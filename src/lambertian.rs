@@ -4,6 +4,7 @@ use vector;
 use sampling;
 use ray::Ray;
 use hitable::*;
+use random::*;
 
 use std::fmt;
 use std::fmt::Debug;
@@ -16,9 +17,9 @@ pub struct Lambertian {
 
 // two-sided lambertian
 impl Material for Lambertian {
-    fn wants_importance_sampling(&self) -> bool { false }
+    fn wants_importance_sampling(&self) -> bool { true }
     fn albedo(&self, ray: &Ray, surface_normal: &Vec3) -> Vec3 {
-        self.albedo
+        self.albedo * surface_normal.dot(&ray.direction())
     }
     
     fn bsdf(&self, ray: &Ray, surface_normal: &Vec3) -> f64 {
@@ -40,15 +41,42 @@ impl Material for Lambertian {
         // over all outgoing directions multiplied by the cosine of the
         // angle between the direction and the normal. In other words,
         // `target` is drawn with probability \propto cos(dir, normal)
-        // Equivalently, this is the integral of radiance(dir) * cos(dir, normal) over all dirs
+
+        // Here's a dumb, slow, and correct rejection-sampling
+        // algorithm
         //
-        // in order to 
+        // todo: replace candidate with random_in_unit_sphere()
+        // since that includes an implicit rand_double()
+        // we can use
+        // loop {
+        //     let candidate = sampling::random_3d_direction();
+        //     let d = candidate.dot(&rec.normal);
+        //     if d < 1e-8 {
+        //         continue;
+        //     }
+        //     if d > rand_double() {
+        //         break Scatter::Bounce(self.albedo,
+        //                               Ray::new(rec.p, candidate));
+        //     }
+        // }
+
+        // loop {
+        //     let candidate = sampling::random_3d_direction();
+        //     let d = candidate.dot(&rec.normal);
+        //     if d < 1e-8 {
+        //         continue;
+        //     }
+        //     if d > rand_double() {
+        //         break Scatter::Bounce(self.albedo,
+        //                               Ray::new(rec.p, candidate));
+        //     }
+        // }
         
         let target;
         if rec.normal.dot(&ray.direction()) > 0.0 {
-            target = rec.p - rec.normal + sampling::random_in_unit_sphere();
+            target = rec.p + sampling::random_3d_direction() - rec.normal;
         } else {
-            target = rec.p + rec.normal + sampling::random_in_unit_sphere();
+            target = rec.p + sampling::random_3d_direction() + rec.normal;
         }
         Scatter::Bounce(self.albedo, Ray::new(rec.p, target - rec.p))
     }
@@ -68,8 +96,10 @@ impl Lambertian {
     }
 }
 
+//////////////////////////////////////////////////////////////////////////////
+
 #[test]
-fn it_works() {
+fn bsdf_is_a_pdf() {
     let m = Lambertian::new(&Vec3::new(1.0, 1.0, 1.0));
     let n = 100000;
     let sufficient = (0..n)
@@ -86,8 +116,84 @@ fn it_works() {
     let exx = sufficient.2/n;
     let variance = exx - ex * ex;
     let t   = (ex - 1.0) / (variance.sqrt() / (n as f64).sqrt());
-    println!("Average: {}", ex);
-    println!("Variance: {}", variance);
-    println!("t: {}", t);
+    println!("testing if bsdf is a pdf:");
+    println!("  Average: {}", ex);
+    println!("  Variance: {}", variance);
+    assert!(t < 1.96 && t > -1.96);
+}
+
+#[test]
+fn integral_cosine_over_the_hemisphere() {
+    let n = 1000000;
+    let sufficient = (0..n)
+        .map(|_| sampling::random_3d_direction())
+        .map(|v| v.dot(&Vec3::new(0.0, 1.0, 0.0)))
+        .filter(|v| v > &1e-8)
+        .fold((0.0, 0.0, 0.0), |acc, next| {
+            (acc.0+1.0, acc.1+next, acc.2+next*next)
+        });
+    let n   = sufficient.0;
+    let ex  = sufficient.1/n;
+    let exx = sufficient.2/n;
+    let variance = exx - ex * ex;
+
+    // integral of cos(x) over hemisphere = pi
+    // hemisphere area * ex = pi
+    // 2 pi * ex = pi
+    // ex = 1/2
+
+    println!("integral of cosine(normal) over the hemisphere");
+    println!("  Average: {}", ex);
+    println!("  Variance: {}", variance);
+    let t   = (ex - 0.5) / (variance.sqrt() / (n as f64).sqrt());
+    assert!(t < 1.96 && t > -1.96);
+}
+
+#[test]
+fn scatter_obeys_cosine_law() {
+    let m = Lambertian::new(&Vec3::new(1.0, 1.0, 1.0));
+    let normal = Vec3::new(0.0, 1.0, 0.0);
+    let hr = HitRecord::hit(0.0, Vec3::new(0.0, 0.0, 0.0),
+                            normal, &*m);
+    let ray = Ray::new(Vec3::new(0.0, 1.0, 0.0),
+                       Vec3::new(0.0, -1.0, 0.0));
+    
+    let n = 1000000;
+    let sufficient = (0..n)
+        .map(|_| m.scatter(&ray, &hr))
+        .map(|s| match s {
+            Scatter::Bounce(_, r) => Some(r),
+            Scatter::Emit(_) => None,
+            Scatter::Absorb => None
+        })
+        .filter(|s| s.is_some())
+        .map(|s| s.unwrap())
+        .map(|scatter_ray| {
+            // these samples are generated, presumably, from a
+            // distribution weighted by the cosine of the angle
+            // between the hemisphere normal and the point.
+            // if we divide by the measure, then,
+            // we should get an expectation.
+
+            let f = m.bsdf(&scatter_ray, &normal);
+            1.0/f
+        })
+        .fold((0.0, 0.0, 0.0), |acc, next| {
+            (acc.0+1.0, acc.1+next, acc.2+next*next)
+        });
+
+    // integral of 1 over the hemisphere == 2pi
+    // hemisphere area * ex = 2pi
+    // ex = 1
+    
+    // quick and dirty one-sample t-test 
+    let n   = sufficient.0;
+    let ex  = sufficient.1/n;
+    let exx = sufficient.2/n;
+    let variance : f64 = exx - ex * ex;
+    let t   = (ex - 1.0) / (variance.sqrt() / (n as f64).sqrt());
+    println!("Testing lambertian scatter");
+    println!("  Average: {}", ex);
+    println!("  Variance: {}", variance);
     assert!(t < 1.96 && t > -1.96);
 }
