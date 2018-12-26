@@ -157,6 +157,22 @@ impl ops::Neg for Vec3 {
     }
 }
 
+pub fn tangent_space(&normal: &Vec3) -> (Vec3, Vec3) {
+    let mut t = cross(&normal, &Vec3::new(1.0, 0.0, 0.0));
+    if t.length() < 0.1 {
+        t = cross(&normal, &Vec3::new(0.0, 1.0, 0.0));
+        if t.length() < 0.1 {
+            t = cross(&normal, &Vec3::new(0.0, 0.0, 1.0));
+        }
+        if t.length() < 0.1 {
+            panic!("You should have sent a non-zero vector");
+        }
+    }
+    let u_vec = unit_vector(&t);
+
+    (u_vec, unit_vector(&cross(&normal, &u_vec)))
+}
+
 pub fn unit_vector(v: &Vec3) -> Vec3 {
     *v / v.length()
 }

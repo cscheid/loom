@@ -35,6 +35,7 @@ pub mod sphere_geometry;
 pub mod triangle_mesh;
 pub mod vector;
 pub mod tests;
+pub mod ward;
 
 use aabb::AABB;
 use background::*;
@@ -126,9 +127,9 @@ fn color(ray: &Ray, world: &Hitable,
                         }
                     }
                 };
-                let light_p = light.0;
+                let light_p = if light.0 < 1e-4 { 0.0 } else { light.0 };
                 let light_d = light.1;
-                let scatter_p = scatter.0;
+                let scatter_p = if scatter.0 < 1e-4 { 0.0 } else { scatter.0 };
                 let scatter_d = scatter.1;
 
                 // Veach's balance heuristic for a one-sample MIS estimator

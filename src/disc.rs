@@ -36,15 +36,6 @@ impl Disc {
     }
 
     pub fn tangent_space(&self) -> (Vec3, Vec3) {
-        // let u_vec = loop {
-        //     let b = sampling::random_3d_direction();
-        //     if b.dot(&self.normal).abs() < 0.05 {
-        //         continue;
-        //     }
-        //     break vector::unit_vector(
-        //         &vector::cross(&self.normal, &b));
-        // };
-        
         let mut t = vector::cross(&self.normal, &Vec3::new(1.0, 0.0, 0.0));
         if t.length() < 0.1 {
             t = vector::cross(&self.normal, &Vec3::new(0.0, 1.0, 0.0));
@@ -57,14 +48,7 @@ impl Disc {
             }
         }
         let u_vec = vector::unit_vector(&t);
-            
-        // let mut u_vec = vector::unit_vector(
-        //     &vector::cross(&self.normal, &Vec3::new(1.0, 0.0, 0.0)));
-        // if u_vec.length() == 0.0 {
-        //     u_vec = vector::unit_vector(
-        //         &vector::cross(&self.normal, &Vec3::new(0.0, 1.0, 0.0)));
-        // }
-        
+
         (u_vec, vector::unit_vector(
             &vector::cross(&self.normal, &u_vec)))
     }

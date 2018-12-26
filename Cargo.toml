@@ -19,14 +19,7 @@ features = [ "rc" ]
 debug = true
 
 [[bin]]
-name = "loom-combine"
-path = "src/combine-main.rs"
-
-[[bin]]
 name = "loom-render"
 path = "src/main.rs"
 
-[[bin]]
-name = "loom-combine-linear"
-path = "src/combine-linear.rs"
 

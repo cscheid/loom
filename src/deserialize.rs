@@ -15,6 +15,7 @@ use serde_json::*;
 use sphere::*;
 use triangle_mesh::*;
 use vector::*;
+use ward::*;
 
 use std::fs::File;
 use std::io::BufReader;
@@ -113,21 +114,28 @@ pub fn deserialize_lambertian(v: &Value) -> Option<Box<Material>>
     }
 }
 
-// pub fn deserialize_phong(v: &Value) -> Option<Box<Material>>
-// {
-//     match v {
-//         &Value::Object(ref m) => {
-//             let albedo     = deserialize_vec3(&m["albedo"]);
-//             let glossiness = deserialize_f64(&m["glossiness"]);
-//             if albedo.is_none() || glossiness.is_none() {
-//                 None
-//             } else {
-//                 Some(Phong::new(&albedo.unwrap(), glossiness.unwrap()))
-//             }
-//         },
-//         _ => None
-//     }
-// }
+pub fn deserialize_ward(v: &Value) -> Option<Box<Material>>
+{
+    match v {
+        &Value::Object(ref m) => {
+            let albedo  = deserialize_vec3(&m["albedo"]);
+            let rho_s   = m["rho_s"].as_f64();
+            let alpha   = m["alpha"].as_f64();
+
+            if albedo.is_none() || rho_s.is_none() ||
+                alpha.is_none()
+            {
+                None
+            } else {
+                Some(Ward::new(
+                    &albedo.unwrap(),
+                    alpha.unwrap(),
+                    rho_s.unwrap()))
+            }
+        },
+        _ => None
+    }
+}
 
 pub fn deserialize_metal(v: &Value) -> Option<Box<Material>>
 {
@@ -356,9 +364,9 @@ pub fn deserialize_material(v: &Value) -> Option<Box<Material>>
                     deserialize_metal(object)
                 } else if name == "mixture" {
                     deserialize_mixture(object)
-                } // else if name == "phong" {
-                //     deserialize_phong(object)
-                // } 
+                } else if name == "ward" {
+                    deserialize_ward(object)
+                } 
                 else {
                     None
                 }
