@@ -4,13 +4,18 @@ use plane::Plane;
 use ray::Ray;
 use sphere_geometry::SphereGeom;
 use sampling;
-use sampling::*;
-use random::*;
 use tests::*;
 
 use std::f64;
-// a disc is an intersection of a plane and a sphere
 
+//////////////////////////////////////////////////////////////////////////////
+// testing imports
+#[allow(unused_imports)]
+use sampling::*;
+#[allow(unused_imports)]
+use random::*;
+
+// a disc is an intersection of a plane and a sphere
 #[derive(Debug)]
 pub struct Disc {
     pub center: Vec3,
@@ -41,12 +46,12 @@ impl Disc {
         // };
         
         let mut t = vector::cross(&self.normal, &Vec3::new(1.0, 0.0, 0.0));
-        if (t.length() < 0.1) {
+        if t.length() < 0.1 {
             t = vector::cross(&self.normal, &Vec3::new(0.0, 1.0, 0.0));
-            if (t.length() < 0.1) {
+            if t.length() < 0.1 {
                 t = vector::cross(&self.normal, &Vec3::new(0.0, 0.0, 1.0));
             }
-            if (t.length() < 0.1) {
+            if t.length() < 0.1 {
                 println!("{:?}", self.normal);
                 panic!("WTFFFFFF");
             }
@@ -157,7 +162,7 @@ fn subtended_angle_estimation_works() {
 #[test]
 fn tangent_space_works()
 {
-    for i in 0..100 {
+    for _i in 0..100 {
         let hemi = Disc::new(sampling::random_in_unit_sphere(),
                              sampling::random_3d_direction(),
                              rand_double());
@@ -195,14 +200,14 @@ fn tangent_space_works()
 #[test]
 fn sample_generation_works()
 {
-    for i in 0..100 {
+    for _i in 0..100 {
         let hemi = Disc::new(sampling::random_in_unit_sphere(),
                              sampling::random_3d_direction(),
                              rand_double());
-        for j in 0..100 {
+        for _j in 0..100 {
             let s = hemi.random();
             let d = (s - hemi.center).length();
-            if (d > hemi.radius) {
+            if d > hemi.radius {
                 println!("FAILUREEE!!!!!");
                 let t = hemi.tangent_space();
                 println!("{:?}", t);
@@ -219,9 +224,9 @@ fn sample_generation_works()
         let t2 = t_stat(&mut itor2, hemi.center.y());
         let t3 = t_stat(&mut itor3, hemi.center.z());
         
-        if (!(t1 > -5.0 && t1 < 5.0 &&
-              t2 > -5.0 && t2 < 5.0 &&
-              t3 > -5.0 && t3 < 5.0)) {
+        if !(t1 > -5.0 && t1 < 5.0 &&
+             t2 > -5.0 && t2 < 5.0 &&
+             t3 > -5.0 && t3 < 5.0) {
             assert!(t1 > -5.0 && t1 < 5.0 &&
                     t2 > -5.0 && t2 < 5.0 &&
                     t3 > -5.0 && t3 < 5.0);

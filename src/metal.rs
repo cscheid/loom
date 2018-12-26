@@ -19,10 +19,10 @@ impl Material for Metal {
     // in all but a measure-zero set. effectively it
     // means that importance sampling from the lights
     // is useless
-    fn bsdf(&self, ray: &Ray, surface_normal: &Vec3) -> f64 {
+    fn bsdf(&self, _ray_in: &Ray, _ray_out: &Ray, _surface_normal: &Vec3) -> f64 {
         0.0
     }
-    fn albedo(&self, ray: &Ray, surface_normal: &Vec3) -> Vec3 {
+    fn albedo(&self, _ray: &Ray, _ray_out: &Ray, _surface_normal: &Vec3) -> Vec3 {
         self.albedo
     }
     

@@ -1,7 +1,11 @@
 use vector::Vec3;
 use vector;
 use ray::Ray;
+
+// testing imports
+#[allow(unused_imports)]
 use tests::*;
+#[allow(unused_imports)]
 use random::*;
 
 // standard plane representation of signed distance from origin +
@@ -33,7 +37,7 @@ impl Plane {
         let num = self.eval(&ray.origin());
         let den = self.normal.dot(&ray.direction());
 
-        if (den.abs() < 1e-8) {
+        if den.abs() < 1e-8 {
             None
         } else {
             Some(ray.point_at_parameter(-num / den))
@@ -150,7 +154,7 @@ fn it_works() {
 
     let ray_intersection = plane2.intersect(&plane3);
     assert!(ray_intersection.is_some());
-    for i in 0..100 {
+    for _i in 0..100 {
         let u = rand_double();
         assert!(within_eps_f(plane2.eval(&ray_intersection.unwrap().point_at_parameter(u)), 0.0));
         assert!(within_eps_f(plane3.eval(&ray_intersection.unwrap().point_at_parameter(u)), 0.0));

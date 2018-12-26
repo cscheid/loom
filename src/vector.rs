@@ -1,9 +1,10 @@
 use std::ops;
+
+// testing imports
+#[allow(unused_imports)]
 use tests::*;
-use rand;
+#[allow(unused_imports)]
 use rand::Rng;
-use rand::ThreadRng;
-use serde::*;
 
 #[derive(Serialize, PartialEq, Deserialize, Debug, Copy, Clone)]
 pub struct Vec3 {
@@ -224,7 +225,7 @@ pub fn luminance(v: &Vec3) -> f64 {
 #[test]
 fn it_works() {
     let v1 = Vec3::new(1.0, 0.0, 0.0);
-    let mut v2 = Vec3::new(0.0, 1.0, 0.0);
+    let v2 = Vec3::new(0.0, 1.0, 0.0);
     let mut rng = rand::thread_rng();
 
     assert!(within_eps(&(v1 + v2), &Vec3::new(1.0, 1.0, 0.0)));
@@ -249,7 +250,6 @@ fn it_works() {
     for _ in 0..100 {
         let r1 = unit_vector(&random_vec());
         let r2 = unit_vector(&random_vec());
-        let rf = rng.gen::<f64>();
 
         let v = cross(&r1, &r2);
         let axis = unit_vector(&v);

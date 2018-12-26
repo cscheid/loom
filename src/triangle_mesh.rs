@@ -1,16 +1,20 @@
 use aabb::AABB;
 use aabb;
 use hitable::*;
-use lambertian::*; // for testing
 use material::Material;
 use ray::*;
 use std::option::Option;
-use tests::*;
 use vector::*;
 
 use rand;
 use rand::Rng;
 use std::cmp::Ordering;
+
+// testing imports
+#[allow(unused_imports)]
+use tests::*;
+#[allow(unused_imports)]
+use lambertian::*;
 
 //////////////////////////////////////////////////////////////////////////////
 

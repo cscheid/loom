@@ -51,8 +51,7 @@ impl Hitable for BVH {
     }
     // this should never be called
     fn importance_distribution(&self) -> Option<AABB> {
-        panic!("importance_distribution called on BVH!");
-        None
+        panic!("importance_distribution called on BVH!")
     }
 }
 

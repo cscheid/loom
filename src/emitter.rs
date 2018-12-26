@@ -1,12 +1,15 @@
 use material::*;
 use vector::Vec3;
 use vector;
-use sampling;
 use ray::Ray;
 use hitable::*;
 
 use std::fmt;
 use std::fmt::Debug;
+
+// testing imports
+#[allow(unused_imports)]
+use sampling;
 
 #[derive(Debug)]
 pub struct Emitter {
@@ -17,8 +20,8 @@ pub struct Emitter {
 impl Material for Emitter {
     fn wants_importance_sampling(&self) -> bool { false }
 
-    fn bsdf(&self, ray: &Ray, surface_normal: &Vec3) -> f64 {
-        let x = vector::unit_vector(&ray.direction()).dot(surface_normal);
+    fn bsdf(&self, _ray_in: &Ray, ray_out: &Ray, surface_normal: &Vec3) -> f64 {
+        let x = vector::unit_vector(&ray_out.direction()).dot(surface_normal);
         if x <= 0.0 {
             0.0
         } else {
@@ -26,12 +29,11 @@ impl Material for Emitter {
         }
     }
 
-    fn albedo(&self, ray: &Ray, surface_normal: &Vec3) -> Vec3 {
-        panic!("Should never call albedo for emitter");
-        Vec3::new(0.0, 0.0, 0.0)
+    fn albedo(&self, _ray_in: &Ray, _ray_out: &Ray, _surface_normal: &Vec3) -> Vec3 {
+        panic!("Should never call albedo for emitter")
     }
     
-    fn scatter(&self, _ray: &Ray, _rec: &HitRecord) -> Scatter
+    fn scatter(&self, _ray_in: &Ray, _rec: &HitRecord) -> Scatter
     {
         Scatter::Emit(self.emission)
     }

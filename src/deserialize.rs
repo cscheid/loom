@@ -8,7 +8,7 @@ use lambertian::*;
 use material::*;
 use metal::*;
 use mixture::*;
-use phong::*;
+// use phong::*;
 use rectangle::*;
 use scene::*;
 use serde_json::*;
@@ -113,21 +113,21 @@ pub fn deserialize_lambertian(v: &Value) -> Option<Box<Material>>
     }
 }
 
-pub fn deserialize_phong(v: &Value) -> Option<Box<Material>>
-{
-    match v {
-        &Value::Object(ref m) => {
-            let albedo     = deserialize_vec3(&m["albedo"]);
-            let glossiness = deserialize_f64(&m["glossiness"]);
-            if albedo.is_none() || glossiness.is_none() {
-                None
-            } else {
-                Some(Phong::new(&albedo.unwrap(), glossiness.unwrap()))
-            }
-        },
-        _ => None
-    }
-}
+// pub fn deserialize_phong(v: &Value) -> Option<Box<Material>>
+// {
+//     match v {
+//         &Value::Object(ref m) => {
+//             let albedo     = deserialize_vec3(&m["albedo"]);
+//             let glossiness = deserialize_f64(&m["glossiness"]);
+//             if albedo.is_none() || glossiness.is_none() {
+//                 None
+//             } else {
+//                 Some(Phong::new(&albedo.unwrap(), glossiness.unwrap()))
+//             }
+//         },
+//         _ => None
+//     }
+// }
 
 pub fn deserialize_metal(v: &Value) -> Option<Box<Material>>
 {
@@ -356,9 +356,10 @@ pub fn deserialize_material(v: &Value) -> Option<Box<Material>>
                     deserialize_metal(object)
                 } else if name == "mixture" {
                     deserialize_mixture(object)
-                } else if name == "phong" {
-                    deserialize_phong(object)
-                } else {
+                } // else if name == "phong" {
+                //     deserialize_phong(object)
+                // } 
+                else {
                     None
                 }
             }

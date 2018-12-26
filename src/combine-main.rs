@@ -185,25 +185,6 @@ fn combine_summaries(summary1: &ImageSummaries,
     }
 }
 
-fn write_sample_summaries_to_file(image: &Vec<Vec<Vec3>>, ns: usize, name: &String)
-{
-    // this is fairly unsafe, but screw it
-    let mut f = BufWriter::new(File::create(format!("/tmp/{}-temp.bincode", name)).unwrap());
-    
-    let summary = ImageSummaries {
-        w: image[0].len(),
-        h: image.len(),
-        s: ns,
-        data: image.to_owned()
-    };
-
-    bincode::serialize_into(&mut f, &summary, bincode::Infinite);
-
-    // atomic rename to not let other processes see the partially-written files
-    std::fs::rename(format!("{}-temp.bincode", name),
-                    format!("{}.bincode", name));
-}
-
 fn load(filename: &String) -> ImageSummaries {
     let mut f = BufReader::new(File::open(filename).unwrap());
     bincode::deserialize_from(&mut f, bincode::Infinite).unwrap()

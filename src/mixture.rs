@@ -23,14 +23,14 @@ impl Material for Mixture {
             self.mat_2.wants_importance_sampling()
     }
 
-    fn bsdf(&self, ray: &Ray, surface_normal: &Vec3) -> f64 {
-        (1.0 - self.u) * &self.mat_1.bsdf(ray, surface_normal) +
-            self.u * &self.mat_2.bsdf(ray, surface_normal)
+    fn bsdf(&self, ray_in: &Ray, ray_out: &Ray, surface_normal: &Vec3) -> f64 {
+        (1.0 - self.u) * &self.mat_1.bsdf(ray_in, ray_out, surface_normal) +
+            self.u * &self.mat_2.bsdf(ray_in, ray_out, surface_normal)
     }
     
-    fn albedo(&self, ray: &Ray, surface_normal: &Vec3) -> Vec3 {
-        vector::lerp(&self.mat_1.albedo(ray, surface_normal),
-                     &self.mat_2.albedo(ray, surface_normal),
+    fn albedo(&self, ray_in: &Ray, ray_out: &Ray, surface_normal: &Vec3) -> Vec3 {
+        vector::lerp(&self.mat_1.albedo(ray_in, ray_out, surface_normal),
+                     &self.mat_2.albedo(ray_in, ray_out, surface_normal),
                      self.u)
     }
 

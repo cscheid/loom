@@ -4,11 +4,14 @@ use vector;
 use sampling;
 use ray::Ray;
 use hitable::*;
-use random::*;
 
 use std::fmt;
 use std::fmt::Debug;
 use std::f64;
+
+// testing imports
+#[allow(unused_imports)]
+use random::*;
 
 #[derive(Debug)]
 pub struct Lambertian {
@@ -18,12 +21,12 @@ pub struct Lambertian {
 // two-sided lambertian
 impl Material for Lambertian {
     fn wants_importance_sampling(&self) -> bool { true }
-    fn albedo(&self, ray: &Ray, surface_normal: &Vec3) -> Vec3 {
-        self.albedo * surface_normal.dot(&ray.direction())
+    fn albedo(&self, _ray_in: &Ray, ray_out: &Ray, surface_normal: &Vec3) -> Vec3 {
+        self.albedo * surface_normal.dot(&ray_out.direction())
     }
     
-    fn bsdf(&self, ray: &Ray, surface_normal: &Vec3) -> f64 {
-        let x = vector::unit_vector(&ray.direction()).dot(surface_normal);
+    fn bsdf(&self, _ray_in: &Ray, ray_out: &Ray, surface_normal: &Vec3) -> f64 {
+        let x = vector::unit_vector(&ray_out.direction()).dot(surface_normal);
         if x <= 0.0 {
             0.0
         } else {
@@ -34,46 +37,10 @@ impl Material for Lambertian {
         }
     }
 
-    fn scatter(&self, ray: &Ray, rec: &HitRecord) -> Scatter {
-
-        // this is a 1-sample monte-carlo approximation of
-        // the integral of the resulting radiance
-        // over all outgoing directions multiplied by the cosine of the
-        // angle between the direction and the normal. In other words,
-        // `target` is drawn with probability \propto cos(dir, normal)
-
-        // Here's a dumb, slow, and correct rejection-sampling
-        // algorithm
-        //
-        // todo: replace candidate with random_in_unit_sphere()
-        // since that includes an implicit rand_double()
-        // we can use
-        // loop {
-        //     let candidate = sampling::random_3d_direction();
-        //     let d = candidate.dot(&rec.normal);
-        //     if d < 1e-8 {
-        //         continue;
-        //     }
-        //     if d > rand_double() {
-        //         break Scatter::Bounce(self.albedo,
-        //                               Ray::new(rec.p, candidate));
-        //     }
-        // }
-
-        // loop {
-        //     let candidate = sampling::random_3d_direction();
-        //     let d = candidate.dot(&rec.normal);
-        //     if d < 1e-8 {
-        //         continue;
-        //     }
-        //     if d > rand_double() {
-        //         break Scatter::Bounce(self.albedo,
-        //                               Ray::new(rec.p, candidate));
-        //     }
-        // }
-        
+    // generate a sample of ray_out distributed according to the bsdf
+    fn scatter(&self, ray_in: &Ray, rec: &HitRecord) -> Scatter {
         let target;
-        if rec.normal.dot(&ray.direction()) > 0.0 {
+        if rec.normal.dot(&ray_in.direction()) > 0.0 {
             target = rec.p + sampling::random_3d_direction() - rec.normal;
         } else {
             target = rec.p + sampling::random_3d_direction() + rec.normal;
@@ -103,9 +70,12 @@ fn bsdf_is_a_pdf() {
     let m = Lambertian::new(&Vec3::new(1.0, 1.0, 1.0));
     let n = 100000;
     let sufficient = (0..n)
-        .map(|_| m.bsdf(&Ray::new(Vec3::new(0.0, 0.0, 0.0),
-                                  sampling::random_3d_direction()),
-                        &Vec3::new(0.0, 1.0, 0.0)))
+        .map(|_| m.bsdf(
+            &Ray::new(Vec3::new(0.0, 0.0, 0.0),
+                      Vec3::new(0.0, 1.0, 0.0)),
+            &Ray::new(Vec3::new(0.0, 0.0, 0.0),
+                      sampling::random_3d_direction()),
+            &Vec3::new(0.0, 1.0, 0.0)))
         .filter(|x| x > &1e-8)
         .fold((0.0, 0.0, 0.0), |acc, next| {
             (acc.0+1.0, acc.1+next, acc.2+next*next)
@@ -175,7 +145,7 @@ fn scatter_obeys_cosine_law() {
             // if we divide by the measure, then,
             // we should get an expectation.
 
-            let f = m.bsdf(&scatter_ray, &normal);
+            let f = m.bsdf(&ray, &scatter_ray, &normal);
             1.0/f
         })
         .fold((0.0, 0.0, 0.0), |acc, next| {

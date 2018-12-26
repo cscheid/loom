@@ -9,32 +9,32 @@ extern crate serde_json;
 extern crate bincode;
 extern crate rayon;
 
-mod aabb;
-mod background;
-mod bvh;
-mod camera;
-mod deserialize;
-mod dielectric;
-mod disc;
-mod emitter;
-mod hitable;
-mod hitable_list;
-mod lambertian;
-mod material;
-mod metal;
-mod mixture;
-mod phong;
-mod plane;
-mod random;
-mod ray;
-mod rectangle;
-mod scene;
-mod sampling;
-mod sphere;
-mod sphere_geometry;
-mod triangle_mesh;
-mod vector;
-mod tests;
+pub mod aabb;
+pub mod background;
+pub mod bvh;
+pub mod camera;
+pub mod deserialize;
+pub mod dielectric;
+pub mod disc;
+pub mod emitter;
+pub mod hitable;
+pub mod hitable_list;
+pub mod lambertian;
+pub mod material;
+pub mod metal;
+pub mod mixture;
+// pub mod phong;
+pub mod plane;
+pub mod random;
+pub mod ray;
+pub mod rectangle;
+pub mod scene;
+pub mod sampling;
+pub mod sphere;
+pub mod sphere_geometry;
+pub mod triangle_mesh;
+pub mod vector;
+pub mod tests;
 
 use aabb::AABB;
 use background::*;
@@ -44,12 +44,9 @@ use deserialize::*;
 use disc::*;
 use getopts::Options;
 use hitable::*;
-use hitable_list::*;
-use metal::Metal;
 use rand::Rng;
 use random::*;
 use ray::Ray;
-use scene::Scene;
 use vector::Vec3;
     
 use std::cmp;
@@ -58,11 +55,8 @@ use std::fs::File;
 use std::io::BufReader;
 use std::io::BufWriter;
 use std::io::Write;
-use std::thread;
-use std::time::SystemTime;
 
 use rayon::prelude::*;
-use serde_json::*;
 
 //////////////////////////////////////////////////////////////////////////////
 
@@ -73,7 +67,7 @@ fn color(ray: &Ray, world: &Hitable,
     let mut current_ray = *ray;
     let mut current_attenuation = Vec3::new(1.0, 1.0, 1.0);
         
-    for depth in 0..50 {
+    for _depth in 0..50 {
         if current_attenuation.length() < 1e-8 {
             return Vec3::new(0.0, 0.0, 0.0)
         }
@@ -120,17 +114,15 @@ fn color(ray: &Ray, world: &Hitable,
                 };
                 let scatter = {
                     match hr.material.scatter(&current_ray, &hr) {
-                        material::Scatter::Bounce(attenuation, scattered) => {
-                            (hr.material.bsdf(&scattered, &hr.normal),
+                        material::Scatter::Bounce(_attenuation, scattered) => {
+                            (hr.material.bsdf(&current_ray, &scattered, &hr.normal),
                              scattered.direction())
                         }
-                        material::Scatter::Emit(emission) => {
-                            panic!("Whaaaaa emit?!");
-                            (0.0, Vec3::new(0.0, 0.0, 0.0))
+                        material::Scatter::Emit(_emission) => {
+                            panic!("Whaaaaa emit?!")
                         },
                         material::Scatter::Absorb => {
-                            panic!("Whaaaaa absorb?!");
-                            (0.0, Vec3::new(0.0, 0.0, 0.0))
+                            panic!("Whaaaaa absorb?!")
                         }
                     }
                 };
@@ -152,13 +144,13 @@ fn color(ray: &Ray, world: &Hitable,
 
                 let next_values = if (light_p > 0.0) && rand_double() < 0.5 { // sample from lights
                     ((light_w / light_p)     * 2.0, Ray::new(hr.p, light_d))
-                } else if (scatter_p > 0.0) {
+                } else if scatter_p > 0.0 {
                     ((scatter_w / scatter_p) * 2.0, Ray::new(hr.p, scatter_d))
                 } else {
                     return Vec3::new(0.0, 0.0, 0.0);
                 };
+                let albedo = hr.material.albedo(&current_ray, &next_values.1, &hr.normal);
                 current_ray = next_values.1;
-                let albedo = hr.material.albedo(&current_ray, &hr.normal);
                 current_attenuation = current_attenuation * albedo * next_values.0;
             }
         }
@@ -294,7 +286,6 @@ fn write_image(args: &Args)
             output_image.push(vec![Vec3::zero(); nx]);
         }
         let mut rng = rand::thread_rng();
-        let mut last_write = SystemTime::now();
             
         for s in 1..ns+1 {
             update_all_pixels(&mut output_image,

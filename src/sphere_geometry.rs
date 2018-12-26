@@ -1,7 +1,6 @@
 use vector::Vec3;
 use vector;
 use ray::Ray;
-use disc::Disc;
 
 pub struct SphereGeom {
     pub center: Vec3,
