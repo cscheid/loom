@@ -33,7 +33,7 @@ impl Ward {
 impl Material for Ward {
     fn is_emitter(&self) -> bool { false }
 
-    fn wants_importance_sampling(&self) -> bool { false }
+    fn wants_importance_sampling(&self) -> bool { true }
     
     fn albedo(&self, _ray_in: &Ray, ray_out: &Ray, surface_normal: &Vec3) -> Vec3 {
         self.albedo * surface_normal.dot(&ray_out.direction())
@@ -46,7 +46,7 @@ impl Material for Ward {
         if o.dot(n) <= 1e-8 {
             return 0.0;
         }
-        let h = vector::unit_vector(&vector::lerp(&i, &o, 0.5)); // unnormalized half-vector works, see Walter 2005
+        let h = &vector::lerp(&i, &o, 0.5); // unnormalized half-vector works, see Walter 2005
 
         let ts = vector::tangent_space(n);
         let x = ts.0;
@@ -89,7 +89,9 @@ impl Material for Ward {
         // println!("{} {} {}", i.dot(&n), h.dot(&n), o.dot(&n));
 
         // fixme, add the weighting term here from Equation (10) in Walter 2005
-        Scatter::Bounce(self.albedo, Ray::new(hr.p, o))
+        let rho_s = self.rho_s;
+        Scatter::Bounce(Vec3::new(rho_s, rho_s, rho_s),
+                        Ray::new(hr.p, o))
     }
 
     fn debug(&self, f: &mut fmt::Formatter) -> fmt::Result {
